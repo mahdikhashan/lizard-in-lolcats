@@ -35,6 +35,43 @@ The Lizard paper writes the window without RoPE. Thus the thesis must report thi
 
 The window branch applies RoPE to its queries and keys with the cos and sin of the teacher (`window_inputs` in `lizard_attention_v2.py`). When the model generates text, the cache holds the keys after RoPE ([document 13](../13-lizard-attention-v2.md), P5).
 
+## RoPE in the window and the linearization
+
+RoPE is only in the window branch. The gated branch has no RoPE.
+
+- `window_inputs` applies RoPE to the queries and keys of the window branch, and only when `window_rope` is true.
+- `feature_maps` gets the queries and keys without RoPE. Thus the kernel $\phi(q_i)^\top \phi(k_j)$ of the gated branch depends only on the content of the tokens.
+- When the model generates text, the cache holds the window keys after RoPE. The state of the gated branch holds $\phi(k_j)$ without RoPE.
+
+### The window branch
+
+1. **The window branch is not a linear attention.** It is a softmax attention over the last 128 keys and the 4 sinks. The linearization applies only to the gated branch. Thus RoPE in the window does not change the cost or the memory. Each key gets its rotation one time, at its own position, when it goes into the cache. A RoPE score depends only on $i - j$, so the rotated keys in the cache stay correct ([document 13](../13-lizard-attention-v2.md), P5).
+2. **Inside the window, the scores are the scores of the teacher.** With RoPE, the window score is $R(q_i)^\top R(k_j) / \sqrt{d}$, as in the teacher. Thus for the keys inside the window, the window weights are proportional to the weights of the teacher. Only the denominator is different: it is the sum over the window and the sinks, not over all earlier keys. For queries at positions 0–127, all keys are inside the window. There, a window with RoPE gives the teacher output up to rounding (1.3e-5 in bf16, [XAI: branch decomposition](xai-branch-fit.md), finding 1).
+3. **Without RoPE, the window knows which tokens are inside it, but not their order.** The mask gives the set of keys. The score $q_i^\top k_j$ gives no position. Thus a window without RoPE cannot give the previous-token attention of layer 0 ([document 15](../15-attention-math-side-by-side.md), claim F). Heads 14 and 23 of layer 15 are window heads. In Run 1, their window without RoPE was the largest single source of the stage 1 loss ([XAI: branch decomposition](xai-branch-fit.md), finding 6).
+4. **The two branches get separate tasks.** The window gives the local attention of the teacher, with the positions. The gated branch must approximate only the part of the teacher output from keys outside the window. Thus the error of the linearization moves to the long range. One part of the error stays at short positions: with `gla_norm: row`, the gated branch keeps the weight 1 there ("Results", findings 6 and 7).
+
+### The gated branch
+
+- The only position information of the gated branch is the decay $\prod \gamma$. This decay prefers recent tokens and decreases with the distance. It is not a code of the relative position, as RoPE is. For example, it cannot select the token three positions back.
+- In `window_rope`, 99.9–100.0% of the tokens in layers 1–15 have γ > 0.999 ("Results", Lizard parameters). If γ > 0.999 for all tokens, the decay is above $0.999^{128} \approx 0.88$ over 128 tokens and above $0.999^{2048} \approx 0.13$ over 2048 tokens. Thus in these layers, the gated branch is almost a mean of the earlier tokens without positions, with weights from the feature similarity.
+- Layer 0 is different. Its gate keeps 0.87 of the weight after 128 tokens.
+
+### The methods side by side
+
+| Method | Window branch | Linear or gated branch | Source |
+|---|---|---|---|
+| LoLCATs | RoPE | RoPE. The feature maps get the queries and keys after RoPE. | [Document 15](../15-attention-math-side-by-side.md), `process_qkv` in `linear_attention.py` |
+| Lizard paper | No RoPE | No RoPE. The positions come only from the gate. | [Document 15](../15-attention-math-side-by-side.md), [document 13](../13-lizard-attention-v2.md) |
+| Liger | Paper: no RoPE. Code: RoPE. | No RoPE | [Document 15](../15-attention-math-side-by-side.md) |
+| `window_rope` | RoPE | No RoPE. The positions come only from the gate. | `lizard_attention_v2.py` |
+
+### RoPE in the gated branch: an option for later
+
+- The gated branch can get RoPE as in LoLCATs: $\phi(R(q_i))^\top \phi(R(k_j))$. The form stays linear and recurrent, because each key gets its rotation at its own position before it goes into the state.
+- The Hedgehog map $\phi$ is not linear. Thus this kernel is not a function of $i - j$ only. The feature maps see the absolute angles of the rotation, and RoPE loses its relative-position property.
+- Positions after the training length give combinations of angles that the feature maps did not see in training. Thus the results on longer inputs can become worse.
+- The code does not have this option. It would be a new experiment with one change (for example `gla_rope: true`), with the recipe of `window_rope`. It is an open question whether this option improves the long range. Outside the window, the scores of the teacher depend on the positions. Now the gated branch must approximate them with features without positions.
+
 ## Predictions
 
 [XAI: branch decomposition](xai-branch-fit.md) gives reference values for Run 1. The table converts the relative errors of each layer into a stage 1 loss. The conversion uses the mean square of the teacher output of each layer ([`fd128_lolcats.json`](xai-layer-wise-mse/fd128_lolcats.json)). The conversion of the trained output gives 3.252, against the stored loss 3.2549.
