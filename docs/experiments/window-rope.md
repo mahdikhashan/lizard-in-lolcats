@@ -1,6 +1,6 @@
 # Experiment: RoPE in the window branch (`window_rope`)
 
-**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6 ("Results", Run 2). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
+**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6. On all MMLU questions: 27.2, against 31.7 for the teacher ("Results", MMLU, all questions). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
 
 ## Question
 
@@ -273,6 +273,7 @@ All values come from the same harness. z values with unpaired SEs. Run 2 is the 
 | ARC-Easy | 54.8 ± 1.0 | 43.3 ± 1.0 | **63.8 ± 1.0** | +9.0 points, z ≈ 6.3 | 62.8 |
 | ARC-Easy, normalized | 50.1 | 41.0 | 56.9 | +6.9 points | 58.0 |
 | MMLU subset | 24.9 ± 2.6 | 24.6 ± 2.5 | 25.6 ± 2.6 | +0.7 points | 26.0 |
+| MMLU, all questions (2026-10-11) | 23.3 | – | **27.2 ± 0.4** | +3.9 points | – |
 | "A" / "B" / "C" / "D" on MMLU | 98.6% / 1.1% / 0.4% / 0.0% | 40.0% / 20.4% / 16.5% / 23.2% | 41.4% / 37.5% / 20.7% / 0.4% | – | 19.3% / 14.7% / 42.8% / 23.2% |
 | Letter mass, confidence, entropy | – | 0.498, 0.743, 0.963 bits | 0.980, 0.348, 1.908 bits | – | 0.962, 0.450, 1.746 bits |
 
@@ -297,13 +298,54 @@ Values of the papers, from another version of the harness ([document 7](../07-re
 
 **Finding 13: the stage 2 loss is much lower than in Run 2**. The final validation loss is 1.235, against 2.252 for Run 2. The loss still decreased at the last evaluation (by 0.002 after step 1000).
 
-**Finding 14: MMLU stays at chance**. The accuracy is 25.6%, and the teacher has 33.7%. The "A" collapse of Run 2 (98.6% "A") is gone, and the four letters get 98.0% of the probability. But the probability is spread almost evenly over "A", "B" and "C" (confidence 0.348, entropy 1.908 bits), and "D" gets 0.4% of the answers. Thus the model gives the answer format, but it does not find the right answer. The 5-shot MMLU prompts are long (up to 2048 tokens). Thus MMLU probably depends more on the part of the attention outside the window than PIQA and ARC-Easy do. This is a hypothesis.
+**Finding 14: MMLU stays at chance**. The accuracy is 25.6%, and the teacher has 33.7%. The "A" collapse of Run 2 (98.6% "A") is gone, and the four letters get 98.0% of the probability. But the probability is spread almost evenly over "A", "B" and "C" (confidence 0.348, entropy 1.908 bits), and "D" gets 0.4% of the answers. Thus the model gives the answer format, but it does not find the right answer. **Update (2026-10-11):** on all questions, the accuracy is 27.2, above chance (finding 15). The teacher has the same even spread over the letters (finding 20). The 5-shot MMLU prompts are long (up to 2048 tokens). Thus MMLU probably depends more on the part of the attention outside the window than PIQA and ARC-Easy do. This is a hypothesis.
 
 #### Decision of Run 2
 
 - **Report:** `window_rope` after stage 2 is the best Lizard model of this project. It is an extension, not the reproduction ([document 19](../19-next-steps-from-literature.md), part B).
 - **Done on 2026-10-10:** the teacher on PIQA and ARC-Easy in this harness (X0 of [gap analysis 2](../12-gap-analysis-2.md)), with `MODELS=teacher TASKS="piqa arc_easy" scripts/compare_stages.sh`. It gives 74.4 and 65.3 (finding 12).
-- **The remaining gap is MMLU** (25.6 against 33.7 for the teacher). Changes to the part outside the window, such as the gated branch and step 3 of [document 20](../20-layer-mse-for-piqa-arc.md), target this gap. Their effect must be checked on MMLU, not only on PIQA and ARC-Easy.
+- **The remaining gap is MMLU** (27.2 against 31.7 for the teacher on all questions, findings 15–18). Changes to the part outside the window, such as the gated branch and step 3 of [document 20](../20-layer-mse-for-piqa-arc.md), target this gap. Their effect must be checked on MMLU, not only on PIQA and ARC-Easy.
+
+### MMLU, all questions (2026-10-11)
+
+- **Run:** `MODELS="teacher stage2" TASKS=mmlu scripts/compare_stages.sh` on `student06` (one A10, lolcats `c132d29`). 14,042 questions, 5-shot. The teacher took 2 hours 30 minutes, and the stage 2 model 4 hours 31 minutes.
+- **Checks:** all 80 stage 1 tensors and all 128 stage 2 tensors loaded. 0 missing, 0 unexpected.
+- **Files in [`window-rope/`](window-rope/):** the [summary](window-rope/mmlu_full_summary.md) and its lm-eval CSV file. The write-out files of each question (approximately 175 MB for each model) are not in the repository.
+- **Analysis:** the values below the score table come from a one-off analysis of the write-out files, on a CPU. The script `mmlu_items.py` of [document 22](../22-mmlu-xai-methods.md) can make it repeatable.
+
+The harness score is the mean over the 57 subjects. The mean over all questions is also given.
+
+| Measure | Teacher | `window_rope` after stage 2 | Run 2 ([document 7](../07-results.md)) |
+|---|---|---|---|
+| MMLU, mean over subjects | **31.7 ± 0.4** | **27.2 ± 0.4** | 23.3 |
+| MMLU, mean over questions | 31.0 | 26.9 | – |
+| "A" / "B" / "C" / "D" | 49.6% / 26.1% / 21.8% / 2.6% | 42.3% / 38.0% / 18.2% / 1.4% | – |
+| Letter mass, confidence, entropy | 0.999, 0.342, 1.904 bits | 0.975, 0.354, 1.900 bits | – |
+
+The right answers are "A" for 22.9%, "B" for 24.7%, "C" for 25.5% and "D" for 26.9% of the questions. The Lizard paper gives 31.0 for the teacher, 29.8 for Lizard and 27.3 for LoLCATs.
+
+**Finding 15: on all questions, `window_rope` is above chance**. It gets 27.2, which is approximately 5.9 SE above 25%. Run 2 was 4.8 SE below chance. Thus the subset (25.6) did not show the gain. The value is near LoLCATs in the Lizard paper (27.3), and 2.6 points below Lizard in the paper.
+
+**Finding 16: the gap to the teacher is clear, and it is a third of the knowledge**. On the same questions, the teacher has 4.2 more points (paired SE 0.44, z ≈ 9.5). The teacher alone is right on 2,210 questions, and the student alone on 1,625 (McNemar z ≈ 9.5). The student gets 86% of the teacher score. But it keeps only 33% of the part of the teacher above chance ((27.2 − 25) / (31.7 − 25)).
+
+**Finding 17: the student follows the teacher**. When the teacher is right, the student is right on 49.3% of the questions. When the teacher is wrong, the student is right on only 16.8%. Without a link between the models, both values would be 26.9%. The two models give the same letter on 49.2% of the questions (34.9% by chance, kappa 0.22). The probability of the right letter has a correlation of 0.60 between the models.
+
+**Finding 18: the student loses most where the teacher knows most**.
+
+| Subject group | Questions | Teacher | `window_rope` | Gap | Part of the teacher above chance that the student keeps |
+|---|---|---|---|---|---|
+| STEM | 3,153 | 28.3 | 25.4 | 2.8 | 12% |
+| Humanities | 4,705 | 28.8 | 26.1 | 2.7 | 29% |
+| Social sciences | 3,077 | 32.1 | 27.5 | 4.7 | 35% |
+| Other | 3,107 | 36.2 | 28.9 | 7.2 | 35% |
+
+The values are means over the questions of each group. Computer security has the largest gap of a single subject (49.0 against 30.0). The next largest are high school European history, high school statistics, security studies, high school geography and world religions.
+
+**Finding 19: the gap does not increase with the length of the prompt**. In the four quarters of the prompt length (in characters), the gap is 5.9, 3.8, 2.4 and 4.5 points. The shortest prompts have the largest gap. The length and the subject are not independent. But this result does not support the hypothesis that the long 5-shot context causes the gap ([document 21](../21-mmlu-options.md), section 2).
+
+**Finding 20: the letter statistics do not separate the two models**. The teacher and the student have almost the same confidence and entropy. Both prefer "A" and almost never give "D". Thus finding 14 is wrong in one point. The even spread over the letters is a property of the 1B teacher in this format, not a sign of damage in the student. The gap is in the choice of the right letter (findings 16–18).
+
+**Finding 21: bf16 ties affect both models**. In both models, the letter log-likelihoods are multiples of 0.125 or 0.25 (bf16 logits). 24.2% of the teacher answers and 20.5% of the student answers have a tie at the maximum. In a tie, the first letter wins. With a random choice in each tie, the mean over questions is 31.7 for the teacher (stored 31.0) and 27.0 for the student (stored 26.9). The letter shares are then 40.0% / 28.6% / 27.8% / 3.5% (teacher) and 35.5% / 38.7% / 23.7% / 2.1% (student). Thus the ties add to the preference for "A", but the rare "D" does not come from the ties. [Document 22](../22-mmlu-xai-methods.md), A6, gives the details.
 
 ## Decision rules
 
