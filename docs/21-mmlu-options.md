@@ -1,6 +1,6 @@
 # 21. Options for MMLU
 
-**Status:** An analysis and a plan from 2026-10-10. No new runs. It uses a web search on 2026-10-10 and the sources of [document 19](19-next-steps-from-literature.md). The session could not open arXiv, the ACL Anthology or PMLR. Thus most values from papers come from search snippets. Check each value against the paper before the thesis cites it.
+**Status:** An analysis and a plan from 2026-10-10. No new runs. It uses a web search on 2026-10-10 and the sources of [document 19](19-next-steps-from-literature.md). The session could not open arXiv, the ACL Anthology or PMLR. Thus most values from papers come from search snippets. Check each value against the paper before the thesis cites it. **Update (2026-10-11):** check M0 ran (all MMLU questions). Sections 1–3 give its results, and section 2 changes one claim.
 
 ## 1. Where MMLU stands
 
@@ -8,8 +8,8 @@ All values of this project come from the same harness (`b281b09`).
 
 | Model | MMLU subset (285 questions) | MMLU, all questions | PIQA | ARC-Easy |
 |---|---|---|---|---|
-| Teacher (Llama-3.2-1B) | 33.7 | Not measured | 74.4 | 65.3 |
-| `window_rope` after stage 2 ([experiment](experiments/window-rope.md)) | 25.6 | Not measured | 73.1 | 63.8 |
+| Teacher (Llama-3.2-1B) | 33.7 | 31.7 | 74.4 | 65.3 |
+| `window_rope` after stage 2 ([experiment](experiments/window-rope.md)) | 25.6 | 27.2 | 73.1 | 63.8 |
 | Lizard model of [document 7](07-results.md) (Run 2) | 24.9 | 23.3 | 67.95 | 54.8 |
 | LoLCATs attention, stage 1 only ([control](experiments/lolcats-control.md)) | 26.0 | Not measured | 73.5 | 62.8 |
 
@@ -23,23 +23,24 @@ Values of other papers for Llama-3.2-1B, from [document 19](19-next-steps-from-l
 
 **Three facts:**
 
-1. **The gap is now specific to MMLU.** On PIQA and ARC-Easy, `window_rope` gets 98.2% and 97.7% of the teacher. On the MMLU subset, it is at chance.
-2. **MMLU gives a small signal at 1B.** The teacher is only 6–9 points above chance (25%). On the subset, one SE is approximately 2.6 points. Thus the subset cannot separate differences below approximately 7 points. On all 14,042 questions, one SE is approximately 0.4 points.
+1. **The gap is now specific to MMLU.** On PIQA and ARC-Easy, `window_rope` gets 98.2% and 97.7% of the teacher. On all MMLU questions, it gets 27.2 against 31.7 (86%). But it keeps only 33% of the part of the teacher above chance.
+2. **MMLU gives a small signal at 1B.** On all questions, the teacher is only 6.7 points above chance (25%). On the subset, one SE is approximately 2.6 points. Thus the subset cannot separate differences below approximately 7 points. On all 14,042 questions, one SE is approximately 0.4 points.
 3. **At 1B, fully linear methods usually stay near chance.** The Liger paper measured 23.1 for LoLCATs and 22.4 for Liger. Only the Lizard paper (29.8) and STILL (29.8) report values near the teacher. STILL keeps softmax attention over selected tokens.
 
 ## 2. Why MMLU is different from PIQA and ARC-Easy
 
 - **The answer format.** In MMLU, the score is the likelihood of one letter ("A" to "D"). The model must find the option that agrees with its knowledge and give the letter of that option. In PIQA and ARC-Easy, the score is the likelihood of the full answer text. Thus a model can know the answer and still fail on the letter step.
 - **A few heads do the letter step.** Bick et al. (ICML 2025) call these heads Gather-and-Aggregate (G&A) heads. In a pruned Llama-3.1-8B, one disabled G&A head drops MMLU from 66% to 25%. Recurrent models give smoother attention patterns, without the sharp transitions that G&A needs. Hybrid models give the G&A role to their attention layers.
-- **The data of this project agree with this.** The model gives a letter, but it does not select one. After stage 2, `window_rope` gives "A" / "B" / "C" / "D" for 41.4% / 37.5% / 20.7% / 0.4% of the questions. The letter mass is 0.980, but the confidence is only 0.348, and the entropy is 1.908 bits (maximum 2).
-- **The context is long.** The 5-shot prompts have up to 2048 tokens. The question and the options are usually in the last approximately 100 tokens, inside the window ([document 7](07-results.md), section 3). But with `gla_norm: row`, the gated branch adds an average over all earlier tokens with the weight 1. A smooth average can blur the sharp attention of the letter step. This is a hypothesis.
+- **Update (2026-10-11): the letter statistics do not show the failure.** The first version of this document gave a wrong sign. It used the low confidence (0.348) and the high entropy (1.908 bits) on the subset as a sign of a broken letter step. On all questions, the teacher has almost the same values: confidence 0.342 and 0.354, entropy 1.904 and 1.900 bits. Both models prefer "A" and almost never give "D". Thus these values are a property of the 1B teacher in this format. The G&A explanation is still possible, but these values do not support it.
+- **The student follows the teacher, but it loses most where the teacher knows most.** The answers of the two models have a link. When the teacher is right, the student is right on 49.3% of the questions. When the teacher is wrong, the student is right on 16.8%. The gap is 7.2 points in the "other" group and 4.7 in the social sciences, where the teacher is 7–11 points above chance. In STEM and the humanities, where the teacher is near chance, the gap is 2.7–2.8 points ([experiment](experiments/window-rope.md), findings 17 and 18).
+- **The context is long.** The 5-shot prompts have up to 2048 tokens. The question and the options are usually in the last approximately 100 tokens, inside the window ([document 7](07-results.md), section 3). But with `gla_norm: row`, the gated branch adds an average over all earlier tokens with the weight 1. A smooth average can blur the sharp attention of the letter step. This is a hypothesis. On all questions, the gap does not increase with the prompt length: 5.9, 3.8, 2.4 and 4.5 points in the four quarters of the length. This is a first sign against the hypothesis, but the length and the subject are not independent.
 - **The knowledge is probably not lost.** The knowledge of a language model is mostly in its MLP layers. Neither stage changes the MLP layers. Stage 2 trains LoRA weights only in q, k, v and o. This is also a hypothesis. Check M3 in section 3 tests it.
 
 ## 3. Checks first (no training)
 
 | # | Check | Question | Cost | Code |
 |---|---|---|---|---|
-| M0 | MMLU, all questions, for the teacher and for `window_rope` after stage 2 | What is the exact gap? | Hours on the A10 (not measured) | None: `TASKS=mmlu` |
+| M0 | MMLU, all questions, for the teacher and for `window_rope` after stage 2 | What is the exact gap? **Done on 2026-10-11:** 31.7 against 27.2 (section 1). | 2.5 hours (teacher) and 4.5 hours (`window_rope`) on the A10 | None: `TASKS=mmlu` |
 | M1 | The MMLU subset 0-shot, for both models | Do the 5 examples before the question cause the failure? | Minutes | One task line in `compare_stages.sh` (`--num_shots 0`) |
 | M2 | The MMLU subset with BOS, for both models | Does the missing BOS in the evaluation matter ([document 18](18-gap-timeline.md), section 2)? | Minutes | A small change in `lm_eval_harness/models_huggingface.py`. It does not accept `add_special_tokens=True` for causal models. |
 | M3 | MMLU with rotated answer options ([document 19](19-next-steps-from-literature.md), A3) | Does the model know the answer but fail on the letter? | Minutes | A small script |
@@ -74,7 +75,7 @@ All options change the method of the paper. Thus the thesis must report them as 
 
 ## 5. Recommendation
 
-1. **M0, M1 and M2 in one session on the A10.** M1 needs one task line. M2 needs a small change in the model wrapper of the harness. M0 gives the exact gap before any training.
+1. **M1 and M2 in one session on the A10.** M1 needs one task line. M2 needs a small change in the model wrapper of the harness. Section 1 gives the result of M0.
 2. **M3 and M4.** Each needs a small script. They separate "the knowledge is lost" from "the letter step fails" and show the effect of the gated branch.
 3. **M5, then T1 with one layer.** Bick et al. and the hybrid results of LoLCATs and Lizard make T1 the option with the largest expected effect. M5 selects the layer. Without M5, the KL selection of [document 19](19-next-steps-from-literature.md) (B2) can select it.
 4. **T3 as the change of the recipe.** It can run alone or together with T1.

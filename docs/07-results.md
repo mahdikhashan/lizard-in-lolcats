@@ -11,7 +11,7 @@ The standard errors (SE) are binomial, `sqrt(p (1 − p) / n)`, as the harness r
 
 | Task | Lizard model | Teacher (same harness) | Paper: Lizard 1B | Paper: LoLCATs 1B | Paper: teacher 1B |
 |---|---|---|---|---|---|
-| MMLU 5-shot, all questions | **23.3** | not run yet | 29.8 | 27.3 | 31.0 |
+| MMLU 5-shot, all questions | **23.3** | 31.7 | 29.8 | 27.3 | 31.0 |
 | MMLU 5-shot, MMLU subset (285 questions) | 24.9 | 33.7 | – | – | – |
 | PIQA, 0-shot (accuracy) | **68.0 ± 1.1** | 74.4 ± 1.0 | 74.8 | 74.6 | 74.1 |
 | ARC-Easy, 0-shot (accuracy) | **54.8 ± 1.0** | 65.3 ± 1.0 | 65.6 | 63.0 | 65.4 |
@@ -103,11 +103,12 @@ The Lizard attention v2 with RoPE in the window branch (`window_rope`), after st
 | Task | Lizard model (this document) | `window_rope` after stage 2 | Difference | Teacher (this harness) | Paper: Lizard 1B |
 |---|---|---|---|---|---|
 | MMLU subset (285 questions) | 24.9 | 25.6 | +0.7 points | 33.7 | – |
+| MMLU, all questions (2026-10-11) | 23.3 | **27.2 ± 0.4** | +3.9 points | 31.7 ± 0.4 | 29.8 |
 | PIQA (accuracy) | 67.95 ± 1.09 | **73.1 ± 1.0** | +5.1 points, z ≈ 3.4 | 74.4 ± 1.0 | 74.8 |
 | ARC-Easy (accuracy) | 54.8 ± 1.0 | **63.8 ± 1.0** | +9.0 points, z ≈ 6.3 | 65.3 ± 1.0 | 65.6 |
 | Stage 2 validation loss | 2.252 | 1.235 | – | – | – |
 
-- The "A" collapse on MMLU is gone ("A" for 41.4% of the questions). But the MMLU subset stays at chance, and the teacher has 33.7.
+- The "A" collapse on MMLU is gone ("A" for 41.4% of the questions). On all MMLU questions, `window_rope` gets 27.2, above chance, and the teacher 31.7. The student keeps a third of the part of the teacher above chance ([RoPE in the window branch](experiments/window-rope.md), findings 15–21).
 - On PIQA and ARC-Easy, `window_rope` gets 98.2% and 97.7% of the teacher in this harness. The differences are −1.4 points (z ≈ −0.9) and −1.5 points (z ≈ −1.1), with unpaired SEs.
 
 ## Interpretation so far

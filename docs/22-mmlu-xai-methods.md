@@ -1,6 +1,6 @@
 # 22. XAI methods for MMLU: review of a ChatGPT answer
 
-**Status:** A review of an answer from ChatGPT (2026-10-10) about papers on gated linear attention (GLA) and MMLU. The review compares the answer with these notes and gives an XAI method and a script for each proposed analysis. One check ran on existing evaluation files (section 3, A6). No new runs and no new code. The session could not open arXiv. Thus paper details come from search snippets.
+**Status:** A review of an answer from ChatGPT (2026-10-10) about papers on gated linear attention (GLA) and MMLU. The review compares the answer with these notes and gives an XAI method and a script for each proposed analysis. One check ran on existing evaluation files (section 3, A6). **Update (2026-10-11):** first results of A1, A4 and A6 on all MMLU questions, for the teacher and `window_rope` after stage 2 (section 3). No new runs and no new code. The session could not open arXiv. Thus paper details come from search snippets.
 
 ## 1. The answer in short
 
@@ -44,10 +44,32 @@ In the write-out files of `window_rope` after stage 2, every difference between 
 | `window_rope` with `hybrid`, stage 1 | 16 (5.6%) | 11 | 25.3 | 25.0 |
 | `window_rope`, after stage 2 | 63 (22.1%) | 31 | 25.6 | 24.7 |
 
+On all MMLU questions (2026-10-11). The accuracy here is the mean over the questions.
+
+| Model (all 14,042 questions) | Questions with a tie at the maximum | Tie includes the right letter | Stored accuracy | Accuracy with random choice in ties | Letter shares with random choice in ties |
+|---|---|---|---|---|---|
+| Teacher | 3,399 (24.2%) | 2,003 | 31.0 | 31.7 | 40.0% / 28.6% / 27.8% / 3.5% |
+| `window_rope`, after stage 2 | 2,875 (20.5%) | 1,572 | 26.9 | 27.0 | 35.5% / 38.7% / 23.7% / 2.1% |
+
 - The ties change the letter shares more than the accuracy. A part of the 41.4% "A" after stage 2 comes from the ties.
 - A model with small letter margins gets more ties. After stage 2, the confidence is 0.348.
 - PIQA and ARC-Easy sum the log-likelihoods of many tokens. Thus ties are rare there.
-- **A change for the evaluation:** compute the output layer (`lm_head`) in float32 before the log-softmax. Then evaluate the MMLU subset again. The teacher write-out files are not in this repository, so the ties of the teacher are not measured yet.
+- **The teacher has the same problem.** Its letter log-likelihoods are also multiples of 0.125 or 0.25. The ties lower its accuracy by 0.7 points, because "A" wins each tie and "D" is the most frequent right answer.
+- **"D" is rare without the ties too.** "D" gets only 3.5% of the teacher answers and 2.1% of the student answers. These values use a random choice in each tie. Thus the rare "D" is a preference of the models, not an effect of the ties.
+- **A change for the evaluation:** compute the output layer (`lm_head`) in float32 before the log-softmax. Then evaluate MMLU again, for both models.
+
+#### First results of A1 and A4 (all MMLU questions, 2026-10-11)
+
+| Analysis | Result | Source |
+|---|---|---|
+| A4: paired difference | The teacher has 4.2 more points on the same questions (paired SE 0.44, z ≈ 9.5). The teacher alone is right on 2,210 questions, the student alone on 1,625. | [RoPE in the window branch](experiments/window-rope.md), finding 16 |
+| A4: link between the models | The student is right on 49.3% of the questions that the teacher answers right, and on 16.8% of the others. Same letter on 49.2% of the questions (kappa 0.22). | Finding 17 |
+| A4: letter KL | The KL divergence from the teacher to the student over the four letters is 0.055 on average (median 0.036). It is almost the same for the questions that the teacher answers right (0.059) and wrong (0.053). | – |
+| A1: subject groups | The gap is 2.8 (STEM), 2.7 (humanities), 4.7 (social sciences) and 7.2 points (other). It is largest where the teacher knows most. | Finding 18 |
+| A1: prompt length | The gap is 5.9, 3.8, 2.4 and 4.5 points in the four quarters of the length. It does not increase with the length. | Finding 19 |
+| A6: letter statistics | Teacher and student have almost the same confidence (0.342, 0.354) and entropy (1.904, 1.900 bits) | Finding 20 |
+
+These values come from a one-off analysis of the write-out files. `mmlu_items.py` (section 4) can make them repeatable.
 
 ## 4. Two scripts cover most of the analyses
 
