@@ -1,0 +1,52 @@
+% Chapter 1
+\chapter{Introduction}
+\label{ch:intro}
+
+\section{Softmax attention is expensive for long texts}
+\label{sec:intro-cost}
+
+Large language models use the transformer architecture~\cite{vaswani2017}. In each layer, softmax attention compares the current token with all earlier tokens. Thus the time for a full sequence grows with the square of its length. During text generation, the model also keeps the keys and the values of all earlier tokens in a cache. This cache grows with the length of the text.
+
+For Llama-3.2-1B, the cache needs approximately 32~KiB for each token. This estimate uses 16 layers, 8 key-value heads, a head dimension of 64 and 2 bytes for each value. A text of 128,000 tokens then needs approximately 4~GiB of cache for one sequence. Long inputs, many users at the same time and small devices all make this cost a problem.
+
+\section{Linearization: a trained model gets linear attention}
+\label{sec:intro-linearization}
+
+Linear attention replaces the softmax with a product of feature maps~\cite{katharopoulos2020}. Then the model can keep a state of fixed size in place of the cache, and the time grows only linearly with the length. A model with linear attention can be trained from the start. But this needs a full pretraining run, which is very expensive.
+
+\emph{Linearization} is a cheaper path. It starts from a trained softmax model and keeps most of its weights. Only the attention layers change. A short training then teaches the new attention to copy the old one. LoLCATs~\cite{lolcats}, Liger~\cite{liger} and Lizard~\cite{lizard} are three methods of this type.
+
+\section{The Lizard method and its claims}
+\label{sec:intro-lizard}
+
+Lizard replaces each attention layer with two branches. A \emph{gated branch} uses gated linear attention (GLA)~\cite{gla} with Hedgehog feature maps~\cite{hedgehog}. It covers all earlier tokens with a state of fixed size. A \emph{window branch} uses softmax attention over the last 128 tokens. It adds four learnable sink logits to its denominator. The output is the gated branch plus a learnable weight $\alpha$ times the window branch. Training has two stages. Stage 1 trains only the new Lizard parameters, so that each layer copies the output of the teacher layer. Stage 2 trains low-rank adapters (LoRA)~\cite{lora} with the next-token loss.
+
+For Llama-3.2-1B, Table~9 of the paper reports 74.8 on PIQA, 65.6 on ARC-Easy and 29.8 on MMLU. The teacher has 74.1, 65.4 and 31.0. Thus the paper describes Lizard as almost equal to the teacher at this size.
+
+\section{Research questions}
+\label{sec:rq}
+
+This thesis follows the order of a reproduction study: the claim, the reproduction, the differences, the search for the cause and the conclusion. Four research questions give this order.
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+\item[RQ1] Can the Lizard results of the paper for Llama-3.2-1B be reproduced?
+\item[RQ2] Which differences in the implementation, the training recipe and the evaluation explain the gap to the paper?
+\item[RQ3] Which changes to the Lizard attention close the gap?
+\item[RQ4] Do measurements inside the model explain the scores? These measurements are the layer errors, the attention weights, the gates and the shares of the two branches.
+\end{description}
+
+\section{Contributions}
+\label{sec:contrib}
+
+\begin{enumerate}
+\item \textbf{An open implementation with tests.} Lizard attention runs inside the LoLCATs code base. Its formulas match a slow reference implementation to a relative error below $10^{-10}$ in float64 (\cref{ch:lizard}).
+\item \textbf{A documented reproduction.} The work records every training run, its recipe, its cost and its evaluation. A full run of both stages costs approximately \$19 on one H200 GPU (\cref{ch:setup,ch:repro}).
+\item \textbf{A search for the cause of the gap.} Eight stage 1 variants test the recipe, the precision and the readings of the paper. A control run with the LoLCATs attention shows that the cause is in the attention layer (\cref{ch:gap}).
+\item \textbf{Interpretability tools for distillation.} Four scripts measure the error of each layer, the attention weights, the error at each token position and the share of each branch (\cref{ch:xai}).
+\item \textbf{RoPE in the window branch.} This change gives 98.2\% of the teacher on PIQA and 97.7\% on ARC-Easy. On MMLU, it gives 27.2 against 31.7 for the teacher (\cref{ch:rope}).
+\end{enumerate}
+
+\section{Structure of the thesis}
+\label{sec:structure}
+
+\Cref{ch:background} explains attention, linear attention, gates, windows, distillation and the evaluation. \Cref{ch:related} describes related methods. \Cref{ch:lizard} gives the Lizard method, its implementation and its tests. \Cref{ch:setup} describes the data, the recipes, the infrastructure and the evaluation. \Cref{ch:repro} gives the results of the first reproduction. \Cref{ch:gap} describes the search for the cause of the gap. \Cref{ch:xai} uses interpretability methods to find the cause. \Cref{ch:rope} tests RoPE in the window branch. \Cref{ch:discussion} answers the research questions and gives the limits of the study. \Cref{ch:conclusion} summarizes the work and lists the next steps.

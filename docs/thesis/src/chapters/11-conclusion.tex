@@ -1,0 +1,22 @@
+% Chapter 11
+\chapter{Conclusion and Future Work}
+\label{ch:conclusion}
+
+\section{Summary}
+\label{sec:summary}
+
+This thesis reproduced the Lizard linearization on Llama-3.2-1B in the open LoLCATs code base. The first model stayed far below the paper, and on MMLU it gave \enquote{A} for almost every question. Tests excluded a bug in the formulas. Experiments with the recipe, the precision and the readings of the paper lowered the stage 1 loss, but they did not raise the accuracy. A control with the LoLCATs attention showed that the cause is in the Lizard layer. Four interpretability methods found the most probable mechanism: the window branch without RoPE cannot reproduce the local heads of the teacher. With RoPE in the window, the model reaches 98.2\% of the teacher on PIQA and 97.7\% on ARC-Easy. On MMLU, it gets 27.2 against 31.7 for the teacher.
+
+\section{Future work}
+\label{sec:future}
+
+\begin{enumerate}
+\item \textbf{Complete Table 9.} Evaluate HellaSwag and WinoGrande for \code{window_rope}, and ARC-Challenge, HellaSwag and WinoGrande for the teacher in the same harness.
+\item \textbf{Checks on MMLU without training.} Evaluate MMLU 0-shot, with a beginning-of-text token, with rotated options and without the gated branch. These checks separate a loss of knowledge from a failure of the letter step.
+\item \textbf{Softmax layers or heads.} Keep one or two layers as softmax, selected by the KL divergence or by a search for G\&A heads~\cite{bick2025,klselect}. LoLCATs and Lizard report large MMLU gains with such hybrids at 8B.
+\item \textbf{A KL loss in stage 2.} Train stage 2 on the logits of the teacher, as RADLADS~\cite{radlads} does.
+\item \textbf{Less gated weight at short positions.} Give the gated branch only the keys outside the window. Another way is to start the gate near 0.95 with the shared denominator, so that the gates do not close.
+\item \textbf{RoPE in the gated branch.} Test $\phi(R_i\vq_i)^\top\phi(R_t\vk_t)$ as a new option.
+\item \textbf{More seeds and an efficiency benchmark.} Repeat the best run with other seeds. Measure the speed and the memory for long inputs with a chunked kernel.
+\item \textbf{A hyperparameter search.} The project notes plan an Optuna study with the mean of PIQA and ARC-Easy as its score.
+\end{enumerate}

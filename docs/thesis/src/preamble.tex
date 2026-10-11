@@ -1,0 +1,101 @@
+% Preamble of the thesis
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[english]{babel}
+\usepackage{microtype}
+\usepackage[a4paper,left=3cm,right=2.5cm,top=2.5cm,bottom=2.5cm,headheight=15pt]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{amsmath,amssymb,bm}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,longtable,multirow,makecell,array}
+\usepackage{caption,subcaption}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{csquotes}
+\usepackage[numbers,sort&compress]{natbib}
+\usepackage{xurl}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,calc,backgrounds}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage[capitalise,noabbrev]{cleveref}
+
+% Colors: one palette for the figures, the tables and the boxes
+\definecolor{ink}{HTML}{0B0B0B}
+\definecolor{inksecondary}{HTML}{52514E}
+\definecolor{inkmuted}{HTML}{898781}
+\definecolor{gridline}{HTML}{E1E0D9}
+\definecolor{surface}{HTML}{FCFCFB}
+\definecolor{seriesblue}{HTML}{2A78D6}
+\definecolor{seriesorange}{HTML}{EB6834}
+\definecolor{seriesaqua}{HTML}{1BAF7A}
+\definecolor{seriesyellow}{HTML}{EDA100}
+\definecolor{blue100}{HTML}{CDE2FB}
+\definecolor{blue200}{HTML}{9EC5F4}
+\definecolor{orange100}{HTML}{FBE1D6}
+\definecolor{gray100}{HTML}{F0EFEC}
+
+% Paths of the figures: new figures here, existing figures from the project notes
+\graphicspath{{figures/}{../../experiments/}{../../figures/}}
+
+% Captions and tables
+\captionsetup{font=small,labelfont=bf,format=hang,justification=raggedright,singlelinecheck=false}
+\captionsetup[table]{position=top,skip=4pt}
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{5pt}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+
+% Chapter and section headings
+\titleformat{\chapter}[display]{\normalfont\bfseries\color{ink}}{\large\color{seriesblue}\MakeUppercase{\chaptertitlename}\ \thechapter}{6pt}{\LARGE}
+\titlespacing*{\chapter}{0pt}{-10pt}{18pt}
+\titleformat{\section}{\normalfont\Large\bfseries\color{ink}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{ink}}{\thesubsection}{0.8em}{}
+\titlespacing*{\section}{0pt}{14pt}{6pt}
+\titlespacing*{\subsection}{0pt}{10pt}{4pt}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{1}
+
+% Header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{inksecondary}\nouppercase{\leftmark}}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\color{gridline}\hrule width\headwidth height\headrulewidth}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[C]{\small\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% Lists
+\setlist{itemsep=1pt,topsep=3pt,parsep=1pt}
+
+% Code names in the text: \code{window_rope}
+\DeclareRobustCommand{\code}[1]{\texttt{\detokenize{#1}}}
+
+% A box for the main finding of a section
+\newtcolorbox{finding}[1][]{enhanced,colback=blue100!35,colframe=seriesblue,boxrule=0pt,leftrule=2.5pt,arc=0pt,
+  left=6pt,right=6pt,top=4pt,bottom=4pt,fontupper=\small,before skip=8pt,after skip=8pt,#1}
+
+% Short notation
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\vq}{\mathbf{q}}
+\newcommand{\vk}{\mathbf{k}}
+\newcommand{\vv}{\mathbf{v}}
+\newcommand{\vx}{\mathbf{x}}
+\newcommand{\vy}{\mathbf{y}}
+\newcommand{\vS}{\mathbf{S}}
+\newcommand{\vz}{\mathbf{z}}
+\newcommand{\pts}{~points}
+
+% Floats: allow larger figures on a text page
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.12}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{totalnumber}{4}

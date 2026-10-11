@@ -1,0 +1,38 @@
+% List of abbreviations
+\chapter*{Abbreviations and Names}
+\addcontentsline{toc}{chapter}{Abbreviations and Names}
+
+\begin{center}
+\small
+\begin{tabularx}{\linewidth}{@{}lL@{}}
+\toprule
+\textbf{Short form} & \textbf{Meaning} \\
+\midrule
+ARC & AI2 Reasoning Challenge, a benchmark of science questions (Easy set and Challenge set) \\
+AWA & Anchor window attention. The paper's name for the window branch. \\
+bf16 & bfloat16, a 16-bit floating-point format \\
+GLA & Gated linear attention \\
+G\&A & Gather-and-aggregate heads \\
+KL & Kullback--Leibler divergence \\
+LoRA & Low-rank adaptation \\
+MMLU & Massive Multitask Language Understanding, a benchmark of 57 subjects \\
+MSE & Mean squared error \\
+PIQA & Physical Interaction Question Answering, a benchmark \\
+RoPE & Rotary position embedding \\
+SE & Standard error \\
+SWA & Sliding window attention \\
+TV & Total variation distance \\
+XAI & Explainable AI. Here: methods that show how the model works inside. \\
+\midrule
+teacher & The unchanged model \code{meta-llama/Llama-3.2-1B} \\
+first Lizard model & The model of the first reproduction: stage 1 of Run 1 and stage 2 of Run 2 \\
+\code{window_rope} & Lizard with RoPE in the window branch. It is the best model of this work. \\
+gated branch & The gated linear attention part of Lizard \\
+window branch & The softmax attention over the last 128 tokens, with 4 sink logits \\
+Lizard parameters & The parameters that Lizard adds to each layer: the feature maps, the gate, the sink logits and $\alpha$ \\
+harness & The LM Evaluation Harness at commit \code{b281b09} \\
+MMLU subset & 285 MMLU questions, 5 from each subject \\
+point & One percentage point \\
+\bottomrule
+\end{tabularx}
+\end{center}

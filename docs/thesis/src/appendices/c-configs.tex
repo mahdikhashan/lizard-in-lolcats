@@ -1,0 +1,48 @@
+% Appendix C
+\chapter{Configurations of the Runs}
+\label{app:configs}
+
+Each run uses three config files of the LoLCATs code base. The model config is in \code{configs/model}. The distill config for stage 1 and the finetune config for stage 2 are in \code{configs/experiment}. \Cref{tab:configs} lists them.
+
+{\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{2.9cm}>{\raggedright\arraybackslash}p{5.6cm}>{\raggedright\arraybackslash}p{6.0cm}@{}}
+\caption[Config files of the runs]{Config files of the runs. All model configs start with \code{distill_llama3_2_1b_lizard}, which the table writes as \code{...}.}\label{tab:configs}\\
+\toprule
+Run & Model config & Stage 1 / stage 2 config \\
+\midrule
+\endfirsthead
+\toprule
+Run & Model config & Stage 1 / stage 2 config \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Run 1 and Run 2 & \nolinkurl{..._w128_fd128_m4} & \nolinkurl{..._lr1e-2_1b} / \nolinkurl{finetune_lora_qkvo_alpaca_clean_1b} \\
+Feature dimension 32 & \nolinkurl{..._w128_fd32_m4} & \nolinkurl{..._lr1e-2_1b} \\
+Paper LR, bf16 & \nolinkurl{..._w128_fd32_m4} & \nolinkurl{..._lr1e-3_cosine_1b} \\
+Paper LR, float32 & \nolinkurl{..._w128_fd32_m4_fp32} & \nolinkurl{..._lr1e-3_cosine_1b} \\
+Config 1 & \nolinkurl{..._w128_fd32_m4_fp32} & \nolinkurl{..._lr1e-3_paper_noclip_1b} / \nolinkurl{finetune_lora_qkv_alpaca_clean_paper_noclip_1b} \\
+Config 2 & \nolinkurl{..._w128_fd32_m4_fp32} & \nolinkurl{..._lr1e-3_paper_1b} \\
+C1 & \nolinkurl{..._v2_w128_fd32_m4_fp32_alphahead} & \nolinkurl{..._lr1e-3_paper_noclip_1b} \\
+R1 & \nolinkurl{..._v2_w128_fd32_m4_fp32_perhead_joint} & \nolinkurl{..._lr1e-3_paper_noclip_1b} \\
+R1b & \nolinkurl{..._v2_w128_fd32_m4_fp32_perhead_hybrid} & \nolinkurl{..._lr1e-3_paper_noclip_1b} \\
+\code{window_rope} & \nolinkurl{..._v2_w128_fd128_m4_windowrope} & \nolinkurl{..._lr1e-2_1b} / \nolinkurl{finetune_lora_qkvo_alpaca_clean_1b} \\
+\code{window_rope} + \code{hybrid} & \nolinkurl{..._v2_w128_fd128_m4_windowrope_hybrid} & \nolinkurl{..._lr1e-2_1b} \\
+LoLCATs control & \nolinkurl{distill_llama3_1_1b_lk_smd_wtk64_fd64_w01} & \nolinkurl{..._lr1e-2_1b} \\
+\end{longtable}
+}
+
+The distill configs start with \code{distill_alpaca_clean_xent0_mse1000}. The table writes this part as \code{...} too. The model config of the LoLCATs control sets the window to 128 and the feature dimension to 128, although its name says 64.
+
+The main settings of the model config of \code{window_rope}:
+\begin{verbatim}
+attention:
+  attention_type: lolcats_llama_lizard_v2
+  feature_dim: 128
+  window_size: 128
+  num_meta: 4
+  gla_norm: row
+  alpha_init: 1.0
+  window_rope: true
+  softmax_attentions: []
+\end{verbatim}

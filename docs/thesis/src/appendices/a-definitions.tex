@@ -1,0 +1,24 @@
+% Appendix A
+\chapter{Definitions}
+\label{app:definitions}
+
+This appendix gives short definitions of terms that the thesis uses.
+
+\begin{description}[leftmargin=0.6cm,style=nextline]
+\item[Causal language modeling] Training a model to predict the next token from the earlier tokens. The loss is the cross-entropy of the right next token. Stage 2 uses this loss.
+\item[Fine-tuning] More training of a trained model on new data, often with a small learning rate or with few trainable parameters.
+\item[Token] A piece of text, for example a word or a part of a word. The model reads and writes tokens.
+\item[Context size] The number of tokens that the model reads at one time. The training of this thesis uses 2048 tokens.
+\item[Packing] Joining many short examples into one long sequence, so that no space is lost. Each training sequence of this thesis has exactly 2048 tokens from several Alpaca examples.
+\item[EOS token] A special token that marks the end of a text. With packing, it separates the examples in a sequence.
+\item[BOS token] A special token at the beginning of a text. The harness of this thesis does not add it for Llama.
+\item[Padding] Extra tokens that make short sequences as long as the longest sequence of a batch. The model must ignore them.
+\item[Batch and gradient accumulation] A batch is the set of sequences for one gradient step. With gradient accumulation, the trainer adds the gradients of several small batches before it makes one step. This thesis uses 1 sequence and 8 accumulation steps.
+\item[Epoch] One pass over all training data.
+\item[Learning rate schedule] The rule that changes the learning rate during training. \emph{Warmup} increases it from a small value at the start. A \emph{cosine} schedule then decreases it along a cosine curve. \emph{Reduce on plateau} decreases it only when the validation loss stops improving.
+\item[Gradient clipping] A limit on the norm of the gradient. A larger gradient gets a smaller scale before the step.
+\item[bf16 and float32] Two number formats. float32 has 24 bits of precision. bf16 has 8 bits of precision, but the same range as float32. bf16 needs half the memory. But it cannot store small changes to a weight.
+\item[Log-likelihood] The logarithm of the probability that the model gives to a text. The harness uses it to compare answer options.
+\item[Few-shot] A prompt with some solved examples before the question. MMLU in this thesis uses 5 examples (5-shot).
+\item[Standard error] The expected spread of a measured value around its true value. For an accuracy $p$ on $n$ questions, it is $\sqrt{p(1-p)/n}$.
+\end{description}

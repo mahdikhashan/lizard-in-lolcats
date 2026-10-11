@@ -1,0 +1,48 @@
+% Chapter 10
+\chapter{Discussion}
+\label{ch:discussion}
+
+\section{Answers to the research questions}
+\label{sec:answers}
+
+\begin{description}[leftmargin=1.2cm,style=nextline]
+\item[RQ1] \textbf{Can the Lizard results for Llama-3.2-1B be reproduced?} Not with the method as written. The first Lizard model got 23.3 on MMLU, 68.0 on PIQA and 54.8 on ARC-Easy, against 29.8, 74.8 and 65.6 in the paper (\cref{ch:repro}). The extension \code{window_rope} comes close on PIQA and ARC-Easy, but it is not the method of the paper.
+\item[RQ2] \textbf{Which differences explain the gap?} Not the recipe alone and not the code. The tests found no bug. The recipe of the paper in float32 did not give a better model than the LoLCATs recipe. The LoLCATs control in the same pipeline reached the teacher on short tasks after stage 1. Thus the attention layer causes most of the gap (\cref{ch:gap}).
+\item[RQ3] \textbf{Which changes close the gap?} RoPE in the window branch closes most of the gap on PIQA and ARC-Easy: 98.2\% and 97.7\% of the teacher. One $\alpha$ for each head, feature maps for each head and the shared denominator did not help (\cref{ch:gap,ch:rope}).
+\item[RQ4] \textbf{Do the measurements inside the model explain the scores?} Partly. They found the mechanism: local heads, a window without RoPE and a gated branch with too much weight at short positions. They predicted the effect of RoPE in the window correctly. But the error at short positions did not rank the checkpoints by accuracy (\cref{ch:xai}).
+\end{description}
+
+\section{Why PIQA and ARC-Easy recover, and MMLU does not}
+\label{sec:why-mmlu}
+
+PIQA and ARC-Easy prompts are short, so the window does almost all the work. A window with RoPE computes the teacher scores inside the window. Thus these two tasks mostly test the window, and \code{window_rope} reaches the teacher. MMLU is different in three ways. The 5-shot prompts have up to 2048 tokens, so the gated branch acts on most of the context. The task tests knowledge, and the teacher itself is only 6.7 points above chance. And the answer is one letter, so the model must connect the right option with its letter. Bick et al.~\cite{bick2025} explain that a few sharp retrieval heads do this step, and that recurrent models give smoother attention. This agrees with the results, but the project did not test it directly.
+
+The full MMLU results add two facts. First, the student follows the teacher: it is right much more often when the teacher is right. Thus the student keeps part of the knowledge. Second, the gap does not grow with the prompt length. Thus the long context alone does not explain the gap. The stage 2 data may also matter: stage 2 uses the next-token loss on Alpaca, not the logits of the teacher.
+
+\section{Differences from the paper that stay}
+\label{sec:differences}
+
+Some differences from the paper remain. The paper has no public code. The open points D1, D2, D3 and D5 (\cref{tab:open-points}) allow other readings. The evaluation harness is older than the harness of the paper, although the teacher scores agree within 0.7 points. A web search found an ACL 2026 version of the paper. Its abstract reports MMLU gains of 9.4--24.5 points, but this work did not read its tables. The Liger code applies RoPE in the window although the Liger paper does not write it. Thus the code of the Lizard authors may also differ from their paper. This is a possibility, not a fact. A message to the authors is the direct way to find out.
+
+\section{Limits of this study}
+\label{sec:limits}
+
+\begin{itemize}
+\item \textbf{One seed.} Each run has one random seed. Thus the variance from run to run is not known, and small differences between runs can be noise.
+\item \textbf{Small question sets.} Many early decisions used the MMLU subset, with an SE of 2.6 points. Only the final models ran on all questions.
+\item \textbf{bf16 ties.} The bf16 logits give ties in 20--24\% of the MMLU answers, and the harness then selects the first letter. This changes the accuracy by up to 0.7 points.
+\item \textbf{Unpaired statistics.} Most comparisons use unpaired SEs. Paired tests would be more sensitive.
+\item \textbf{No efficiency measurement.} The code is a dense reference that materializes $L \times L$ matrices. This thesis does not measure the speed or the memory of the trained model on long inputs.
+\item \textbf{Unchecked sources.} Some related work comes from web searches and from ChatGPT answers. The full texts of these sources were not read.
+\end{itemize}
+
+\section{Lessons for reproduction work}
+\label{sec:lessons}
+
+\begin{enumerate}
+\item \textbf{Test the code first.} The tests against a slow reference excluded a whole class of causes in a short time.
+\item \textbf{Change one thing at a time.} Each experiment changed one setting. Thus each result has a clear cause.
+\item \textbf{Measure the accuracy, not only the loss.} The stage 1 loss fell from 8.16 to 3.05 over the runs, but the accuracy did not rise.
+\item \textbf{Use a control.} The LoLCATs control showed in one run that the pipeline works and that the attention layer is the cause.
+\item \textbf{Read the code of related methods, not only their papers.} The RoPE in the window of the Liger code was an important hint.
+\end{enumerate}

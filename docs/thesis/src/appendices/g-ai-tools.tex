@@ -1,0 +1,17 @@
+% Appendix G
+\chapter{Use of AI Tools}
+\label{app:ai}
+
+\section{Claude Code}
+
+Claude Code, an AI coding assistant, did most of the implementation and documentation work as pull requests. The author gave each task in a chat, read the pull requests and merged them. The repository \code{jku-thesis} has 4 such pull requests, and the repository \code{lolcats} has more than 90. Examples are the port of Lizard to LoLCATs, the Docker image, the Hugging Face Jobs targets and the NaN fix. Further examples are the evaluation scripts, Lizard attention v2, the XAI scripts and all project notes. The author ran the training jobs and the evaluations and gave the results back as logs and files.
+
+The project notes follow a controlled language (ASD-STE100 rules), and a linter checks each document. The notes mark measured numbers and estimated numbers. They give the source of each number.
+
+\section{ChatGPT}
+
+Some project notes keep answers from ChatGPT without changes. These are the definitions appendix, the evaluation metrics, three answers about reproduction studies and an answer about XAI methods for MMLU. Separate notes review these answers against the measured results. This thesis does not use them as sources of facts. Appendix~\ref{app:definitions} of this thesis gives new definitions.
+
+\section{This thesis}
+
+Claude Code wrote the first draft of this thesis from the project notes and the outline in \code{docs/thesis/outline.md}. It also drew the new plots from the numbers in the notes. It computed the table of Appendix~\ref{app:mmlu} from the answer files of the full MMLU run. The author must check every statement, number and reference. Some references come from web searches, and their full texts were not read. The bibliography marks them.

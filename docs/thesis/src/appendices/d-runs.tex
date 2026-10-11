@@ -1,0 +1,41 @@
+% Appendix D
+\chapter{All Runs and Scores}
+\label{app:runs}
+
+\Cref{tab:all-runs} lists every training run of this thesis with its loss and its scores. The loss is the stage 1 validation loss for stage 1 models and the stage 2 validation loss for stage 2 models. The two losses have different scales. \enquote{A} is the share of the answer \enquote{A} on the MMLU subset. A dash means that the notes have no value.
+
+{\small
+\setlength{\tabcolsep}{4pt}
+\begin{longtable}{@{}p{4.6cm}crrrrr@{}}
+\caption[All runs and scores]{All runs and scores. Accuracy in \%.}\label{tab:all-runs}\\
+\toprule
+Run & Stage & Loss & PIQA & ARC-Easy & MMLU subset & \enquote{A} \\
+\midrule
+\endfirsthead
+\toprule
+Run & Stage & Loss & PIQA & ARC-Easy & MMLU subset & \enquote{A} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Teacher & -- & -- & 74.4 & 65.3 & 33.7 & -- \\
+\midrule
+Run 1, feature dimension 128 & 1 & 3.2549 & 57.6 & 39.0 & 22.5 & 95.4\% \\
+First Lizard model (Run 2) & 2 & 2.252 & 67.95 & 54.8 & 24.9 & 98.6\% \\
+Feature dimension 32 & 1 & 3.4219 & -- & -- & 23.2 & -- \\
+Paper LR, bf16 & 1 & 8.1641 & 55.8 & 34.1 & 25.3 & 21.8\% \\
+Paper LR, float32 & 1 & 4.9478 & 57.7 & 35.7 & 24.6 & -- \\
+Config 1 & 1 & 3.9764 & 57.3 & 36.5 & 26.7 & 51.2\% \\
+Config 2 & 1 & 3.5092 & 57.5 & 35.6 & 23.2 & -- \\
+Stage 2 on config 1 & 2 & 1.9158 & 67.7 & 54.9 & 23.5 & 77.5\% \\
+C1 & 1 & 3.8092 & 57.5 & 34.6 & 23.9 & 64.9\% \\
+R1 & 1 & stopped & -- & -- & -- & -- \\
+R1b & 1 & 3.0542 & 55.9 & 29.9 & 24.9 & 90.2\% \\
+\code{window_rope} & 1 & 1.2290 & 61.5 & 43.3 & 24.6 & 40.0\% \\
+\code{window_rope} & 2 & 1.235 & 73.1 & 63.8 & 25.6 & 41.4\% \\
+\code{window_rope} + \code{hybrid} & 1 & 1.6172 & 58.9 & 36.0 & 25.3 & 26.3\% \\
+LoLCATs control & 1 & 0.4442 & 73.5 & 62.8 & 26.0 & 19.3\% \\
+\end{longtable}
+}
+
+On all MMLU questions, the teacher gets 31.7, the first Lizard model 23.3 and \code{window_rope} after stage 2 27.2. On ARC-Challenge, \code{window_rope} after stage 2 gets 36.1 (\code{acc_norm}).

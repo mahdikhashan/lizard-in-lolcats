@@ -1,0 +1,41 @@
+% Appendix B
+\chapter{Formulas and Proof Sketches}
+\label{app:formulas}
+
+This appendix gives short derivations for the main claims of \cref{tab:proofs}. The project notes (documents~13, 14 and 15) give the full audits and the float64 checks.
+
+\section{The parallel form equals the recurrent form (P1)}
+
+Let $\vS_0 = 0$ and $\vS_i = \gamma_i \vS_{i-1} + \phi_k(\vk_i)\vv_i^\top$. By induction over $i$,
+\begin{equation}
+\vS_i = \sum_{t=1}^{i} \left( \prod_{l=t+1}^{i} \gamma_l \right) \phi_k(\vk_t)\, \vv_t^\top .
+\end{equation}
+The step from $i-1$ to $i$ multiplies every term by $\gamma_i$ and adds the term $t = i$, with an empty product equal to 1. Thus $\phi_q(\vq_i)^\top \vS_i$ is the numerator of \cref{eq:gla}. A second state $\vz_i = \gamma_i \vz_{i-1} + \phi_k(\vk_i)$ gives the denominator in the same way. The denominator is at least $\phi_q(\vq_i)^\top\phi_k(\vk_i) > 0$, because all features are positive. The float64 check gave a difference of $2.2 \times 10^{-16}$.
+
+\section{The total weight of a row and the window share (P2, P8)}
+
+The gated weights of row $i$ sum to 1, because the branch divides by its own row sum. The window weights sum to
+\begin{equation}
+\rho_i = \frac{\sum_{t \in W_i} e^{s_{it}}}{\sum_{j} e^{t_j} + \sum_{t \in W_i} e^{s_{it}}} \le 1 .
+\end{equation}
+Thus the total weight of the row is $1 + \alpha\rho_i$. For $\alpha \ge 0$, the share of the window is $\alpha\rho_i / (1 + \alpha\rho_i)$. This value grows with $\alpha\rho_i$, so it is at most $\alpha/(1 + \alpha)$. With one $\alpha$ for each head (C1), the limit becomes $\alpha_h/(1+\alpha_h)$ for each head. Without the denominator in the gated branch, the limit disappears.
+
+\section{Four equal sinks act as one sink (P7)}
+
+The sinks enter the loss only through $\sum_j \exp(t_j)$. Thus equal logits get equal gradients. Adam updates each element from its own history of gradients. Equal histories give equal updates, so by induction the logits stay equal. Then $\sum_{j=1}^{4} e^{t} = e^{t + \ln 4}$, which is one sink with the logit $t + \ln 4$. All runs of this thesis show four equal sink logits in each layer.
+
+\section{The written sink term can break the denominator (P4)}
+
+The paper writes $\sum_j t_j$ in the denominator. With $m = 4$ sinks, one key with the score 0 and $t_j = -0.25$ for all $j$, the denominator is $4 \cdot (-0.25) + e^0 = 0$. With $t_j = -1$, it is $-3$. With $\sum_j \exp(t_j)$, the denominator is always positive.
+
+\section{The log-space form and the softmax map (P3)}
+
+The log-space form adds $\log c_t$ to the argument of the feature map. For the $\exp$ map, $\exp(\vx W + \log c_t) = c_t \exp(\vx W)$, which gives the gate product. For the softmax map, the same constant appears in every element of the softmax and cancels: $\mathrm{softmax}(\vx W + \log c_t) = \mathrm{softmax}(\vx W)$. Thus with the softmax map of Table~13, the gate disappears from this form.
+
+\section{The shared denominator (\code{hybrid})}
+
+Let $w_{it} = c_{it}\,\phi_q(\vq_i)^\top\phi_k(\vk_t)$ be the gated weights and $m_i$ the larger of the largest window score and the largest sink logit. The option \code{hybrid} computes
+\begin{equation}
+\vy_i = \frac{\sum_{t \le i} w_{it}\, \vv_t + |\alpha| \sum_{t \in W_i} e^{s_{it} - m_i}\, \vv_t}{\sum_{t \le i} w_{it} + |\alpha| \left( \sum_{t \in W_i} e^{s_{it} - m_i} + \sum_j e^{t_j - m_i} \right)} .
+\end{equation}
+The row is a weighted mean of the values with a total weight below 1. The share of the gated branch is its part of the denominator. If the gates are 1, the gated sum grows with the position $i$, but the window sum has at most 128 terms. Thus the window share falls approximately as $1/i$ (P9).

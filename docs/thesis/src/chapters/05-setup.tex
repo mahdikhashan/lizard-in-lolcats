@@ -1,0 +1,196 @@
+% Chapter 5
+\chapter{Experimental Setup}
+\label{ch:setup}
+
+\section{The teacher and the data}
+\label{sec:data}
+
+The teacher is \code{meta-llama/Llama-3.2-1B} in bf16, with the model sizes of \cref{sec:softmax}. Both stages use the cleaned Alpaca data set~\cite{alpaca} (\code{yahma/alpaca-cleaned}), as the paper does. The pipeline joins the examples and cuts the text into sequences of 2048 tokens. This is \emph{packing} (Appendix~\ref{app:definitions}). \Cref{tab:data} gives the sizes.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Data of both training stages]{Data of both training stages (measured in the first run, project notes, document~2).}
+\label{tab:data}
+\begin{tabular}{@{}lr@{}}
+\toprule
+Quantity & Value \\
+\midrule
+Training examples & 51,560 \\
+Validation examples & 200 \\
+Sequences of 2048 tokens in each epoch & 4,714 (approximately 9.7 million tokens) \\
+Epochs in each stage & 2 \\
+Sequences in each gradient step & 8 (batch 1 $\times$ 8 accumulation steps) \\
+Gradient steps in each stage & 1,178 \\
+Validation & every 100 steps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The training recipes}
+\label{sec:recipes}
+
+The first runs used the existing LoLCATs configs. Their recipe differs from the recipe of the paper in several points (\cref{tab:recipes}). The most important differences are the learning rate of stage 1, the schedule and the gradient clipping. \Cref{ch:gap} tests these differences one at a time.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[The LoLCATs recipe against the recipe of the paper]{The LoLCATs recipe of the first runs against the recipe of the paper. Sources: Section 5 and Table 13 of the paper, project notes, documents~4 and 9. Bold rows are the largest differences.}
+\label{tab:recipes}
+\begin{tabularx}{\linewidth}{@{}lLL@{}}
+\toprule
+Setting & Paper & First runs (LoLCATs configs) \\
+\midrule
+Data & Alpaca-cleaned, 2 epochs, 2048 tokens & The same \\
+Global batch & 8 (micro batch 1) & The same \\
+Precision & bf16 & bf16 model, Lizard computations in float32 \\
+\textbf{Learning rate, stage 1} & $\mathbf{10^{-3}}$ & $\mathbf{10^{-2}}$ \textbf{(10$\times$ higher)} \\
+Learning rate, stage 2 & $5 \times 10^{-4}$ & $10^{-4}$ (5$\times$ lower) \\
+\textbf{Schedule} & \textbf{Cosine, 10\% warmup, minimum 0.1$\times$ peak} & \textbf{Almost constant (reduce on plateau), no warmup} \\
+\textbf{Gradient clipping} & \textbf{1.0} & \textbf{None} \\
+AdamW $\beta$ & (0.9, 0.99) & (0.9, 0.999) \\
+LoRA & $r = 8$, $\alpha = 16$, on $W_Q, W_K, W_V$ & $r = 8$, $\alpha = 16$, on $q, k, v$ and $o$ \\
+Lizard parameters in stage 2 & Not given & Frozen \\
+Checkpoint & Not given & Best validation loss \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Infrastructure}
+\label{sec:infra}
+
+\Cref{fig:pipeline} shows the path from a code change to a result. A GitHub workflow builds a Docker image with the training code. Hugging Face Jobs runs the image on one rented GPU. The job pushes the checkpoints to a private model repository on the Hugging Face Hub. A university machine with one NVIDIA A10 (24~GB) then downloads the checkpoints and runs the evaluation. W\&B logs the training curves.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[font=\small, >={Stealth[length=2mm]},
+  pbox/.style={draw=seriesblue, fill=seriesblue!8, rounded corners=1.5pt, align=center, text width=2.4cm, minimum height=1.55cm, inner sep=3pt, line width=0.6pt},
+  arr/.style={->, draw=inksecondary, line width=0.6pt}]
+\node[pbox] (git) at (0,0) {\textbf{GitHub}\\ \footnotesize code, configs,\\ pull requests};
+\node[pbox] (img) at (3.3,0) {\textbf{GitHub Actions}\\ \footnotesize builds the\\ Docker image};
+\node[pbox] (job) at (6.6,0) {\textbf{HF Jobs}\\ \footnotesize one H200:\\ stage 1, stage 2};
+\node[pbox] (hub) at (9.9,0) {\textbf{HF Hub}\\ \footnotesize private\\ checkpoints};
+\node[pbox] (eval) at (9.9,-2.9) {\textbf{University A10}\\ \footnotesize evaluation and\\ XAI scripts};
+\node[pbox] (docs) at (6.6,-2.9) {\textbf{Project notes}\\ \footnotesize results, plots,\\ decisions};
+\node[pbox, draw=inkmuted, fill=inkmuted!8] (wandb) at (3.3,-2.9) {\textbf{W\&B}\\ \footnotesize training curves};
+\draw[arr] (git) -- (img);
+\draw[arr] (img) -- (job);
+\draw[arr] (job) -- (hub);
+\draw[arr] (hub) -- (eval);
+\draw[arr] (eval) -- (docs);
+\draw[arr] (job.south) -- ++(0,-0.55) -| (wandb.north);
+\draw[arr] (docs.south) -- ++(0,-0.35) -| node[pos=0.25, below, font=\footnotesize, text=inksecondary] {next experiment} (git.south);
+\end{tikzpicture}
+\caption[The path from a code change to a result]{The path from a code change to a result. HF is short for Hugging Face. Each experiment is a pull request with a config. A new Docker image is necessary when the code or the config changes.}
+\label{fig:pipeline}
+\end{figure}
+
+Some problems occurred on this path. The first evaluation job failed because the Python import path did not contain the repository root. Several scripts used fixed paths under \code{/workspace}. The W\&B logger ignored all stage 2 metrics, because the step counter started again at 0. A script \code{eval.sh} fixed the evaluation for any machine with an NVIDIA GPU and conda. A second script, \code{compare_stages.sh}, evaluates the teacher, the stage 1 model and the stage 2 model with the same tasks. It also checks that every trainable parameter loads from its checkpoint.
+
+\section{Compute and cost}
+\label{sec:compute}
+
+The Lizard code of this work is a dense reference. It materializes full $L \times L$ matrices in float32 for both branches. Thus a 1B model needs much memory. A measurement on CPU gave approximately 22--25~GB for stage 1 and 41--46~GB for stage 2, with sequences of 2048 tokens. Stage 2 sets the GPU size, because the gradients go back through all layers. \Cref{tab:compute} gives the measured times and costs.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Measured time and cost]{Measured time and cost (project notes, documents~2, 13 and the MMLU summary). The H200 cost \$5.00 for each hour.}
+\label{tab:compute}
+\begin{tabularx}{\linewidth}{@{}Lr@{}}
+\toprule
+Task & Time \\
+\midrule
+Stage 1 on the H200, bf16 (approximately 3.2 sequences each second) & approximately 50 minutes \\
+Stage 2 on the H200, bf16 (approximately 1.07 seconds for each sequence) & approximately 2 hours 50 minutes \\
+Full run of both stages, with set-up and uploads & approximately 3 hours 50 minutes, \$19 \\
+Stage 1 on the H200 in float32 & approximately 2.5 hours \\
+PIQA, full Lizard model, on the A10 (3,676 requests) & 3 minutes 11 seconds \\
+MMLU, all questions, teacher, on the A10 & 2 hours 30 minutes \\
+MMLU, all questions, \code{window_rope}, on the A10 & 4 hours 31 minutes \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The project selected the H200 over the A100. The H200 was approximately 2.7 times faster in the estimate and 20--25\% cheaper for a full run, although its price for each hour is two times higher. One reason is that the float32 matrix products of the dense code run at the plain FP32 speed of the A100. Stage 2 took approximately two times the estimated time. A suspected cause is a copy of the full model output from the GPU to the CPU at every step in the LoLCATs trainer.
+
+\section{The evaluation}
+\label{sec:eval}
+
+All evaluations use the LM Evaluation Harness~\cite{lmeval} at commit \code{b281b09}, as the LoLCATs repository specifies. \Cref{tab:harness} lists the facts about this version that affect the results.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Facts about the harness that affect the results]{Facts about the harness that affect the results (project notes, document~6).}
+\label{tab:harness}
+\begin{tabularx}{\linewidth}{@{}LL@{}}
+\toprule
+Fact & Effect \\
+\midrule
+The MMLU score is the unweighted mean over the 57 subjects. & It differs a little from the mean over all questions. \\
+Each MMLU question gives 4 log-likelihood requests, one for each letter. & 14,042 questions give approximately 56,000 requests. \\
+\code{--limit N} takes the first $N$ questions of each subject after a shuffle with seed 42. & All models get the same questions. A paired comparison is possible. \\
+The batch size is always 1. & The evaluation is slow, but no memory errors occur. \\
+The harness adds no beginning-of-text token for Llama. & The teacher and the Lizard models get the same input. The absolute scores can differ from other harness versions. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The \emph{MMLU subset} has 5 questions from each subject, thus 285 questions. Its standard error is approximately 2.6 points. It is useful for fast checks, but not for small differences. The final MMLU values of this thesis use all 14,042 questions.
+
+\section{Statistics}
+\label{sec:stats}
+
+The harness reports the binomial standard error of an accuracy $p$ on $n$ questions:
+\begin{equation}
+\mathrm{SE} = \sqrt{p\,(1 - p) / n} .
+\end{equation}
+For PIQA ($n = 1{,}838$), the SE is approximately 1.1 points. For ARC-Easy ($n = 2{,}376$), it is approximately 1.0 point. Most comparisons in this thesis are unpaired. They use $z = (p_1 - p_2) / \sqrt{\mathrm{SE}_1^2 + \mathrm{SE}_2^2}$. A difference counts as clear if $|z| \ge 2$. For all MMLU questions, the answers of each question are available for two models. Then a paired SE and McNemar's test are possible (\cref{sec:mmlu-full}). Each training run has one random seed. Thus the variance from run to run is not known (\cref{sec:limits}).
+
+\section{The teacher in this harness}
+\label{sec:teacher}
+
+The paper used a newer version of the harness. Thus the real target is the teacher in the harness of this work. \Cref{tab:teacher} shows that the two harness versions give almost the same teacher scores on PIQA and ARC-Easy.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[The teacher in this harness and in the paper]{The teacher in this harness and in the paper. Sources: project notes, document~7 and the teacher summary. Accuracy in \%.}
+\label{tab:teacher}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Task & This harness & Paper (Table 9) \\
+\midrule
+PIQA & 74.4 $\pm$ 1.0 & 74.1 \\
+ARC-Easy & 65.3 $\pm$ 1.0 & 65.4 \\
+MMLU, all questions & 31.7 $\pm$ 0.4 & 31.0 \\
+MMLU subset (285 questions) & 33.7 & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The models of this thesis}
+\label{sec:models}
+
+\Cref{tab:models} lists the main models. Appendix~\ref{app:runs} lists every run with its loss and its scores.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[The main models of this thesis]{The main models of this thesis.}
+\label{tab:models}
+\begin{tabularx}{\linewidth}{@{}lL@{}}
+\toprule
+Name & Description \\
+\midrule
+Teacher & \code{meta-llama/Llama-3.2-1B}, unchanged \\
+First Lizard model & Lizard v1, feature dimension 128, LoLCATs recipe. Stage 1 of Run~1 and stage 2 of Run~2. \\
+Config 1, config 2 & Stage 1 with the recipe of the paper in float32, feature dimension 32. Config 2 adds gradient clipping. \\
+C1, R1, R1b & Stage 1 with options of v2: one $\alpha$ for each head (C1), and per-head maps with a shared denominator (R1, R1b) \\
+\code{window_rope} & Lizard v2 with RoPE in the window branch. Otherwise the setup of Run~1. \\
+\code{window_rope} + \code{hybrid} & \code{window_rope} with the shared denominator of LoLCATs \\
+LoLCATs control & The LoLCATs attention in the same pipeline, stage 1 only \\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,0 +1,58 @@
+% Appendix F
+\chapter{How to Reproduce the Results}
+\label{app:reproduce}
+
+The code is in the repository \code{mahdikhashan/lolcats}~\cite{lolcatsrepo}. The commands below come from the project notes. They need a Hugging Face token with access to Llama-3.2-1B and to the checkpoint repository.
+
+\section{Training on Hugging Face Jobs}
+
+A full run of both stages with the original Lizard attention:
+\begin{verbatim}
+make hf-job IMAGE=mahdikhashan/lolcats HF_REPO=<hub repo> \
+  HF_FLAVOR=h200 HF_TIMEOUT=6h
+\end{verbatim}
+Stage 1 of \code{window_rope} alone, then stage 2 from its checkpoint:
+\begin{verbatim}
+make hf-job IMAGE=mahdikhashan/lolcats HF_REPO=<hub repo> \
+  HF_FLAVOR=h200 HF_TIMEOUT=2h \
+  ARGS="--model_config \
+  distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope --no_finetune"
+make hf-job-finetune IMAGE=mahdikhashan/lolcats HF_REPO=<hub repo> \
+  DISTILL_CKPT=<path of the stage 1 checkpoint in the hub repo> \
+  ARGS="--model_config \
+  distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope"
+\end{verbatim}
+The default \code{DISTILL_CKPT} of the Makefile is the checkpoint path of Run~1. Thus a stage 2 of another model needs the path of its own stage 1 checkpoint. The project notes do not record the exact command of the \code{window_rope} stage 2, so this command is a reconstruction from the Makefile. The other runs use the configs of Appendix~\ref{app:configs} in \code{ARGS}.
+
+\section{Evaluation on a GPU machine with conda}
+
+\begin{verbatim}
+CONDA_OVERRIDE_CUDA=12.4 conda env create -f environment.yaml
+conda activate lolcats-env
+export HF_TOKEN=...
+scripts/compare_stages.sh            # teacher, stage 1, stage 2
+MODELS=stage2 TASKS="piqa arc_easy" scripts/compare_stages.sh
+MODELS="teacher stage2" TASKS=mmlu scripts/compare_stages.sh
+MODELS=stage2 TASKS="arc_challenge hellaswag winogrande" \
+  scripts/compare_stages.sh
+\end{verbatim}
+
+\section{XAI scripts}
+
+\begin{verbatim}
+python scripts/layer_mse.py compute results/layer_mse/<name>.json \
+  --model_config <model config> --distill_config <distill config>
+python scripts/attention_weights.py compute \
+  results/attention_weights/<name>.json \
+  --model_config <model config> --distill_config <distill config>
+python scripts/position_mse.py compute \
+  results/position_mse/<name>.json \
+  --from_json docs/experiments/xai-layer-wise-mse/<name>.json
+python scripts/branch_fit.py compute \
+  results/branch_fit/<name>.json \
+  --from_json docs/experiments/xai-layer-wise-mse/<name>.json
+\end{verbatim}
+
+\section{This document}
+
+The source of this thesis is in \code{docs/thesis/src}. The command \code{make figures} draws the new plots with matplotlib. The command \code{make} builds the PDF with \code{latexmk}. The command \code{make lint} checks the text with the ASD-STE100 linter of the repository.

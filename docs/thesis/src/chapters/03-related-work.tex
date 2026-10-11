@@ -1,0 +1,74 @@
+% Chapter 3
+\chapter{Related Work}
+\label{ch:related}
+
+\section{Linear attention and recurrent models}
+\label{sec:rw-linear}
+
+Katharopoulos et al.~\cite{katharopoulos2020} showed that linear attention is a recurrent network with a matrix state. Later work added gates and better feature maps. GLA~\cite{gla} uses a gate for each key dimension and trains models from the start. Mamba-2~\cite{mamba2} connects state space models with linear attention. Based~\cite{based} joins linear attention with a small sliding window. The window gives exact local attention, and the linear part gives the long range. Lizard uses the same idea. These models need a full pretraining run. Linearization avoids this cost.
+
+\section{Linearization methods: LoLCATs, Liger and Lizard}
+\label{sec:rw-linearization}
+
+\textbf{LoLCATs}~\cite{lolcats} trains Hedgehog feature maps to copy the attention of a teacher (attention transfer), then trains LoRA weights. Its window has RoPE, and its linear part covers only the tokens before the window. The window and the linear part share one denominator. On Llama-3-8B, LoLCATs with 50\% softmax layers gets 65.8 on MMLU, against 52.8 for the fully linear model and 66.6 for the teacher.
+
+\textbf{Liger}~\cite{liger} has no attention transfer stage and adds no new parameters. It uses the teacher projections in a GLA form with a fixed feature map. It mixes a gated branch and a window with the factor 0.5 each. The paper writes the window without RoPE, but the code of Liger applies RoPE. Liger trains only LoRA weights with the next-token loss.
+
+\textbf{Lizard}~\cite{lizard} keeps the attention transfer stage of LoLCATs. It adds a learned scalar gate, four sink logits and the weight $\alpha$. Its window has no RoPE by design. The paper wants the gate to learn the relative position, so that the model can work on inputs longer than in training. \Cref{tab:methods} compares the three methods with GLA. \Cref{sec:fourmethods} gives the formulas.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Four attention methods side by side]{Four attention methods side by side. The values come from the papers and the code of each method (project notes, document~15).}
+\label{tab:methods}
+\begin{tabularx}{\linewidth}{@{}lLLLL@{}}
+\toprule
+Part & Lizard & LoLCATs & Liger & GLA \\
+\midrule
+Feature map & Hedgehog, learned, shared by the heads & Hedgehog, learned, one for each head & Softmax over the head dimension, no weights & None \\
+Gate & One scalar for each token & None & From the key, power 1/16 (code) & One value for each key dimension \\
+Window & 128 keys, 4 sinks, no RoPE & 64 keys, RoPE & 64 keys, RoPE in the code & None \\
+Tokens in the linear part & All earlier tokens & Only tokens before the window & All earlier tokens & All earlier tokens \\
+Denominator & Own row sum for each branch & Shared by both parts & None in the linear part & None \\
+Total weight of a row & $1 + \alpha\rho_i$ & 1 & $0.5 + 0.5\mu_i$ & -- \\
+Training & Attention transfer, then LoRA & Attention transfer, then LoRA & LoRA only & Pretraining \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Linearized models at the 1B scale}
+\label{sec:rw-1b}
+
+Other papers also report weak MMLU scores for linearized 1B models. \Cref{tab:rw-1b} collects the numbers that the project notes found. The Liger paper reports 23.1 for LoLCATs and 22.4 for Liger on Llama-3.2-1B. The Lizard paper reports 27.3 for LoLCATs on the same model. Thus two papers give different values for the same method, and the evaluation details matter. STILL~\cite{still} keeps exact softmax attention over selected tokens and reports 29.8.
+
+\begin{table}[ht]
+\centering
+\small
+\caption[Reported results of linearized Llama-3.2-1B models]{Reported results of linearized Llama-3.2-1B models. Each paper uses its own harness. The values are accuracies in \%.}
+\label{tab:rw-1b}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Source & Model & MMLU & PIQA & ARC-Easy \\
+\midrule
+Lizard paper, Table 9 & Teacher & 31.0 & 74.1 & 65.4 \\
+ & LoLCATs & 27.3 & 74.6 & 63.0 \\
+ & Lizard & 29.8 & 74.8 & 65.6 \\
+Liger paper, Table 4 & Teacher & 31.0 & -- & -- \\
+ & LoLCATs & 23.1 & 74.1 & 63.7 \\
+ & Liger & 22.4 & 75.0 & 65.4 \\
+STILL & STILL & 29.8 & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Two more results connect to this thesis. RADLADS~\cite{radlads} uses a second stage with the Kullback--Leibler (KL) divergence to the teacher logits, not the next-token loss on new data. A report with the title \enquote{Stuck on A}~\cite{stuckona} describes a linearized 0.6B model with a perplexity near the teacher. But the model has chance accuracy on multiple-choice tasks, and it gives the answer \enquote{A} for 81\% of the questions. \Cref{ch:repro} describes the same symptom.
+
+\section{Hybrid models and retrieval heads}
+\label{sec:rw-hybrid}
+
+Several methods keep a small part of the softmax attention. Bick et al.~\cite{bick2025} study \emph{gather-and-aggregate} (G\&A) heads. A few such heads do the letter step of MMLU. In a pruned Llama-3.1-8B, one disabled G\&A head drops MMLU from 66\% to 25\%. Recurrent models give smoother attention patterns, without the sharp attention that these heads need. DuoAttention~\cite{duoattention} keeps full attention for a few retrieval heads and uses a window with sinks for the other heads. A KL-guided method~\cite{klselect} selects which layers stay softmax. LoLA~\cite{lola} adds a small cache of tokens that linear attention cannot recall. These ideas are options for the MMLU gap (\cref{ch:conclusion}).
+
+\section{Interpretability of distilled attention}
+\label{sec:rw-xai}
+
+The LoLCATs paper plots the error of each layer after attention transfer (its Figure~14). It also compares the attention weights of the teacher and the student (its Figures~18--21). \Cref{ch:xai} uses both methods. Further methods exist, for example activation patching~\cite{heimersheim2024}, induction heads~\cite{olsson2022} and the tuned lens~\cite{belrose2023}. This thesis does not use them, but \cref{ch:conclusion} lists them as next steps.
