@@ -154,7 +154,7 @@ The front matter and the appendices are not part of the 50 pages.
 | 9.3 Results after stage 1 | The validation loss falls from 3.25 to 1.23. All six predictions hold. | [`window_rope`](../experiments/window-rope.md), Run 1 |
 | 9.4 Results after stage 2 | PIQA 73.1 and ARC-Easy 63.8: 98.2% and 97.7% of the teacher | [`window_rope`](../experiments/window-rope.md), Run 2, [document 7](../07-results.md), section 6 |
 | 9.5 The shared denominator does not help | With `hybrid`, the gate closes in 9 of 16 layers, and these layers lose the long range | [`window_rope` with `hybrid`](../experiments/window-rope-hybrid.md) |
-| 9.6 Table 9 of the paper | ARC-Challenge, HellaSwag and WinoGrande against the paper | Not in the docs yet (see "Missing material") |
+| 9.6 Table 9 of the paper | ARC-Challenge, HellaSwag and WinoGrande against the paper | [`window_rope`](../experiments/window-rope.md), "Table 9 tasks" (pull request #93). WinoGrande is missing. |
 | 9.7 MMLU on all questions | 27.2 against 31.7 for the teacher. Above chance, but the student keeps only a third of the part of the teacher score above chance. | [`window_rope`](../experiments/window-rope.md), MMLU section, [MMLU summary](../experiments/window-rope/mmlu_full_summary.md) |
 | 9.8 Letters and ties on MMLU | The teacher and the student have almost the same letter statistics. bf16 logits give ties in 20.5–24.2% of the answers. | [Document 22](../22-mmlu-xai-methods.md), [`window_rope`](../experiments/window-rope.md), findings 20 and 21 |
 
@@ -226,8 +226,7 @@ These parts of the outline need data or text that the docs do not have yet.
 
 | Part | What is missing | Status |
 |---|---|---|
-| 9.6 | HellaSwag and WinoGrande for `window_rope` after stage 2 | Running on `student06` |
-| 9.6 | ARC-Challenge for `window_rope` after stage 2 | Measured on 2026-10-11, not in the docs yet |
+| 9.6 | WinoGrande for `window_rope` after stage 2 | Not measured. ARC-Challenge (36.1) and HellaSwag (60.7) ran on 2026-10-11. |
 | 9.6 | The teacher on ARC-Challenge, HellaSwag and WinoGrande in this harness | Not run |
 | 1.1, 10.3 | Speed and memory of the trained model for long inputs | Not measured. The training speeds are in [document 2](../02-compute-and-cost.md). |
 | 10.4 | A second seed for the best model | Not run |

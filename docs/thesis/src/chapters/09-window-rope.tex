@@ -178,7 +178,7 @@ The gate split the layers into two groups. In 7 layers, the gate stayed open, an
 \section{Table 9 of the paper}
 \label{sec:table9}
 
-\Cref{tab:table9} compares \code{window_rope} with Table~9 of the paper. The paper used a newer harness, so only the teacher rows of the same harness give the real gap. ARC-Challenge ran on 2026-10-11, after the last update of the project notes. HellaSwag and WinoGrande were still running at the time of this draft.
+\Cref{tab:table9} compares \code{window_rope} with Table~9 of the paper. The paper used a newer harness, so only the teacher rows of the same harness give the real gap. ARC-Challenge and HellaSwag ran on 2026-10-11. WinoGrande has no result yet.
 
 \begin{table}[ht]
 \centering
@@ -191,7 +191,7 @@ The gate split the layers into two groups. In 7 layers, the gate stayed open, an
 Model & PIQA & ARC-e & ARC-c & \makecell[r]{Hella-\\Swag} & \makecell[r]{Wino-\\Grande} & MMLU \\
 \midrule
 Teacher, this harness & 74.4 & 65.3 & -- & -- & -- & 31.7 \\
-\code{window_rope}, this harness & 73.1 & 63.8 & 36.1 & pending & pending & 27.2 \\
+\code{window_rope}, this harness & 73.1 & 63.8 & 36.1 & 60.7 & pending & 27.2 \\
 \midrule
 Teacher, paper & 74.1 & 65.4 & 36.4 & 63.8 & 60.0 & 31.0 \\
 LoLCATs, paper & 74.6 & 63.0 & 35.1 & 63.7 & 61.5 & 27.3 \\
@@ -200,7 +200,7 @@ Lizard, paper & 74.8 & 65.6 & 36.5 & 64.1 & 59.7 & 29.8 \\
 \end{tabular}
 \end{table}
 
-On ARC-Challenge, \code{window_rope} gets 36.1 with \code{acc_norm} (33.2 with \code{acc}). This is within 0.4 points of the paper values for the teacher and for Lizard. The teacher of this harness has no ARC-Challenge value yet.
+On ARC-Challenge, \code{window_rope} gets 36.1 with \code{acc_norm} (33.2 with \code{acc}). This is within 0.4 points of the paper values for the teacher and for Lizard. On HellaSwag, it gets 60.7 $\pm$ 0.5 with \code{acc_norm} (47.1 with \code{acc}). This is 3.1 points below the teacher of the paper (63.8), a larger gap than on the other short tasks. The teacher of this harness has no value on these tasks yet. If the two harness versions agree here as on PIQA and ARC-Easy, \code{window_rope} keeps approximately 95\% of the teacher on HellaSwag.
 
 \section{MMLU on all questions}
 \label{sec:mmlu-full}

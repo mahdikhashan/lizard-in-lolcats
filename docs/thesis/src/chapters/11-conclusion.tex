@@ -11,7 +11,7 @@ This thesis reproduced the Lizard linearization on Llama-3.2-1B in the open LoLC
 \label{sec:future}
 
 \begin{enumerate}
-\item \textbf{Complete Table 9.} Evaluate HellaSwag and WinoGrande for \code{window_rope}, and ARC-Challenge, HellaSwag and WinoGrande for the teacher in the same harness.
+\item \textbf{Complete Table 9.} Evaluate ARC-Challenge, HellaSwag and WinoGrande for the teacher in the same harness, and WinoGrande for \code{window_rope}.
 \item \textbf{Checks on MMLU without training.} Evaluate MMLU 0-shot, with a beginning-of-text token, with rotated options and without the gated branch. These checks separate a loss of knowledge from a failure of the letter step.
 \item \textbf{Softmax layers or heads.} Keep one or two layers as softmax, selected by the KL divergence or by a search for G\&A heads~\cite{bick2025,klselect}. LoLCATs and Lizard report large MMLU gains with such hybrids at 8B.
 \item \textbf{A KL loss in stage 2.} Train stage 2 on the logits of the teacher, as RADLADS~\cite{radlads} does.
