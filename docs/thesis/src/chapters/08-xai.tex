@@ -11,8 +11,8 @@ The scores of \cref{ch:repro,ch:gap} show that the model is weak, but not why. T
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\linewidth]{xai-layer-wise-mse/lolcats_vs_all_lizard}
-\caption[Layer-wise MSE of all Lizard stage 1 runs and the LoLCATs control]{Layer-wise MSE of seven Lizard stage 1 runs and the LoLCATs control (blue line in panel a). Panel (b) shows the difference of each Lizard run to the control. The control has a lower error in every layer. Source: project notes, \enquote{XAI: layer-wise MSE}.}
+\includegraphics[width=\linewidth]{xai_layer_mse}
+\caption[Layer-wise MSE of all Lizard stage 1 runs and the LoLCATs control]{Layer-wise MSE of seven Lizard stage 1 runs (gray) and the LoLCATs control (blue). (a)~$1000 \times$ MSE, the scale of the stage 1 loss. (b)~The MSE divided by the mean square of the teacher output, on a log scale. The control has a lower error in every layer. Data: the JSON files of \enquote{XAI: layer-wise MSE} in the project notes.}
 \label{fig:layer-mse}
 \end{figure}
 

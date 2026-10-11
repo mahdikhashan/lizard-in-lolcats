@@ -1,35 +1,51 @@
-% Master thesis: Lizard on Llama-3.2-1B
-% Build: make (in this folder). Output: thesis.pdf, copied to ../thesis.pdf
-\documentclass[12pt,a4paper,oneside]{report}
+% !TeX program = xelatex
+% !TeX encoding = UTF-8
+% !TeX spellcheck = en_US
+% !BIB program = biber
+%%
+%% Master thesis: Lizard on Llama-3.2-1B
+%% Layout: the JKU LaTeX thesis template (jkureport.sty) by Michael Roland,
+%% https://github.com/michaelroland/jku-templates-report-latex, MPL-2.0 (see JKU-TEMPLATE-LICENSE.txt).
+%% Build: make (XeLaTeX and biber through latexmk). Output: thesis.pdf, copied to ../thesis.pdf
+%%
+\documentclass[a4paper,oneside,10pt,ngerman,english]{scrbook}
+
+\usepackage[mathesis,fancyfonts,mathastext]{jkureport}
+%% The template uses the JKU (gray) color scheme by default.
+%% The option TNF selects the color scheme of the Faculty of Engineering and Natural Sciences.
+
 \input{preamble}
+\addbibresource{references.bib}
 
-% Values for the title page. Replace the values in brackets.
-\newcommand{\thesistitle}{Linearizing Llama-3.2-1B with Lizard}
-\newcommand{\thesissubtitle}{A Reproduction Study and a Search for the Gap to the Paper}
-\newcommand{\thesisauthor}{Mahdi Khashan}
-\newcommand{\thesisprogram}{[Name of the study program]}
-\newcommand{\thesissupervisor}{[Name of the supervisor]}
-\newcommand{\thesisinstitute}{[Name of the institute]}
-\newcommand{\thesisuniversity}{Johannes Kepler University Linz}
-\newcommand{\thesisdate}{October 2026}
-
-\hypersetup{pdftitle={\thesistitle}, pdfauthor={\thesisauthor}}
+%% Draft watermark of the template. Remove this line for the final version.
+\setwatermark{DRAFT}{First full draft from the project notes}
 
 \begin{document}
+\frontmatter
 
-\pagenumbering{roman}
-\input{frontmatter/titlepage}
+%% Thesis information. Replace the values in brackets.
+\title{Linearizing Llama-3.2-1B with Lizard: A Reproduction Study and a Search for the Gap to the Paper}
+\titleshort{Linearizing Llama-3.2-1B with Lizard}
+\author{Mahdi~Khashan}
+\supervisor{[Name of the supervisor]}
+\degree{Master of Science}{[Name of the study program]}
+\submissiondepartment{[Name of the institute]}
+\keywords{linear attention, linearization, distillation, Lizard, LoLCATs, rotary position embedding, reproduction study, interpretability}
+\maketitle
+
 \input{frontmatter/abstract}
 \input{frontmatter/ai-declaration}
-{\singlespacing
+
+\cleardoubleoddpage
 \tableofcontents
+\cleardoubleoddpage
 \listoffigures
+\cleardoubleoddpage
 \listoftables
-}
+\cleardoubleoddpage
 \input{frontmatter/abbreviations}
 
-\cleardoublepage
-\pagenumbering{arabic}
+\mainmatter
 \input{chapters/01-introduction}
 \input{chapters/02-background}
 \input{chapters/03-related-work}
@@ -42,6 +58,9 @@
 \input{chapters/10-discussion}
 \input{chapters/11-conclusion}
 
+\cleardoubleoddpage
+\printbibliography
+
 \appendix
 \input{appendices/a-definitions}
 \input{appendices/b-formulas}
@@ -51,9 +70,5 @@
 \input{appendices/f-reproduce}
 \input{appendices/g-ai-tools}
 
-{\singlespacing
-\bibliographystyle{plainnat}
-\bibliography{references}
-}
-
+\cleardoubleoddpage
 \end{document}

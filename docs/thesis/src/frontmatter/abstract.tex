@@ -1,12 +1,17 @@
-% Abstract
-\chapter*{Abstract}
-\addcontentsline{toc}{chapter}{Abstract}
-
+% Abstract in English and the German Kurzfassung (environment abstract* of the JKU template)
+\cleardoubleoddpage
+\begin{abstract*}
 Softmax attention needs more time and memory when the text gets longer. Linearization changes a trained language model so that it uses linear attention with a fixed-size state. Lizard is a linearization method. It replaces each softmax attention layer with two parts. The first part is a gated linear attention over all earlier tokens. The second part is a softmax attention over a short window of recent tokens, with four sink logits. Lizard trains these parts in two stages. Stage 1 copies the output of each teacher attention layer. Stage 2 trains low-rank adapters with the next-token loss. The Lizard paper reports results near the teacher for Llama-3.2-1B.
 
 This thesis reproduces Lizard on Llama-3.2-1B in the open LoLCATs code base. The first reproduction did not reach the paper. It got 23.3 on MMLU, 68.0 on PIQA and 54.8 on ARC-Easy, against 29.8, 74.8 and 65.6 in the paper. Tests show that the code computes the formulas of the paper. The search for the cause tested the training recipe, the numerical precision, the readings of the paper and the design of the attention. A lower stage 1 loss did not give a higher accuracy. Four interpretability methods pointed to the main cause. The window branch has no rotary position embedding (RoPE), so it cannot reproduce the local attention of the teacher.
 
 A window with RoPE gives 73.1 on PIQA and 63.8 on ARC-Easy after stage 2. These scores are 98.2\% and 97.7\% of the teacher in the same evaluation harness. On all 14,042 MMLU questions, the model gets 27.2, against 31.7 for the teacher. Thus the model is above chance, but it keeps only one third of the part of the teacher score above chance. The thesis reports this model as an extension of Lizard, not as a reproduction. It also lists the open questions about MMLU, the efficiency at long inputs and the effect of the random seed.
 
-\vspace{6pt}
-\noindent\textbf{Keywords:} linear attention, linearization, distillation, Lizard, LoLCATs, rotary position embedding, reproduction study, interpretability
+\end{abstract*}
+
+\cleardoubleoddpage
+\begin{otherlanguage}{ngerman}
+\begin{abstract*}
+[Platz für die deutsche Kurzfassung. Der Autor schreibt sie vor der Abgabe.]
+\end{abstract*}
+\end{otherlanguage}

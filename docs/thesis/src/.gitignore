@@ -9,3 +9,8 @@
 *.out
 *.toc
 thesis.pdf
+*.bcf
+*.run.xml
+*.xdv
+*.xmpdata
+*.xmpi

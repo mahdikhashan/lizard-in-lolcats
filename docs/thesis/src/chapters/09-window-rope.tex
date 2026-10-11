@@ -95,8 +95,8 @@ $\alpha$ of layer 0 & 0.042 & 0.660 & -- & -- \\
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\linewidth]{window-rope/layer_mse_vs_run1}
-\caption[Layer-wise MSE of \code{window_rope} against Run~1]{Layer-wise MSE of \code{window_rope} (orange) against Run~1 (blue). Panel (b) shows the difference. Source: project notes, \enquote{RoPE in the window branch}.}
+\includegraphics[width=\linewidth]{rope_layer_mse}
+\caption[Layer-wise MSE of \code{window_rope} against Run~1]{Layer-wise MSE of \code{window_rope} against Run~1 and the LoLCATs control. (a)~$1000 \times$ MSE for each layer. (b)~The factor by which the MSE falls from Run~1 to \code{window_rope}. Data: the JSON files of \enquote{XAI: layer-wise MSE} in the project notes.}
 \label{fig:rope-layer}
 \end{figure}
 
@@ -104,15 +104,15 @@ The branch decomposition explains why the accuracy rose less than the loss (\cre
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\linewidth]{window-rope/branch_fit_0-127}
-\caption[Branch decomposition at positions 0--127]{Branch decomposition at positions 0--127 for Run~1 (left) and \code{window_rope} (right). Each cell is the remaining error after the best fit of a set of branches. In \code{window_rope}, the window W alone is almost exact (light cells), but the trained output (last column) is not. Source: project notes, \enquote{RoPE in the window branch}.}
+\includegraphics[width=\linewidth]{rope_branch_fit}
+\caption[Branch decomposition at positions 0--127]{Branch decomposition at positions 0--127 for Run~1 (left) and \code{window_rope} (right). Each cell is the remaining error after the best fit of a set of branches, divided by $\|\vy\|^2$ (log color scale). In \code{window_rope}, the window W alone is almost exact (light cells), but the trained output (last column) is not. Data: the JSON files of \enquote{XAI: branch decomposition} in the project notes.}
 \label{fig:rope-branch}
 \end{figure}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.72\linewidth]{window-rope/position_heatmap}
-\caption[Relative MSE by layer and position bucket]{Relative MSE by layer and position bucket for Run~1 (left) and \code{window_rope} (right). Short positions now have the largest error, most of all in layers 2 and 3. Source: project notes, \enquote{RoPE in the window branch}.}
+\includegraphics[width=0.82\linewidth]{rope_position_heatmap}
+\caption[Relative MSE by layer and position bucket]{Relative MSE by layer and position bucket for Run~1 (left) and \code{window_rope} (right). Short positions now have the largest error, most of all in layers 2 and 3. Data: the JSON files of \enquote{XAI: MSE by token position} in the project notes.}
 \label{fig:position-heatmap}
 \end{figure}
 
@@ -233,16 +233,16 @@ Entropy over the four letters & 1.904 bits & 1.900 bits \\
 
 \begin{figure}[ht]
 \centering
-\begin{minipage}[t]{0.6\linewidth}
-\includegraphics[width=\linewidth]{mmlu_groups}
+\includegraphics[width=0.62\linewidth]{mmlu_groups}
 \caption[MMLU by subject group]{MMLU by subject group, with the number of questions. The values are means over the questions of each group.}
 \label{fig:mmlu-groups}
-\end{minipage}\hfill
-\begin{minipage}[t]{0.37\linewidth}
-\includegraphics[width=\linewidth]{mmlu_subjects}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.55\linewidth]{mmlu_subjects}
 \caption[MMLU for each subject]{MMLU for each of the 57 subjects. Points below the diagonal are subjects where the student loses. Data in Appendix~\ref{app:mmlu}.}
 \label{fig:mmlu-subjects}
-\end{minipage}
 \end{figure}
 
 \textbf{The gap does not grow with the prompt length.} In the four quarters of the prompt length, the gap is 5.9, 3.8, 2.4 and 4.5 points. The shortest prompts have the largest gap. The length and the subject are not independent, but this result does not support the idea that the long 5-shot context causes the gap.

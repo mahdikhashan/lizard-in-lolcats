@@ -63,8 +63,9 @@ Checkpoint & Not given & Best validation loss \\
 
 \begin{figure}[ht]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[font=\small, >={Stealth[length=2mm]},
-  pbox/.style={draw=seriesblue, fill=seriesblue!8, rounded corners=1.5pt, align=center, text width=2.4cm, minimum height=1.55cm, inner sep=3pt, line width=0.6pt},
+  pbox/.style={draw=lizardcolor, fill=lizardcolor!8, rounded corners=1.5pt, align=center, text width=2.4cm, minimum height=1.55cm, inner sep=3pt, line width=0.6pt},
   arr/.style={->, draw=inksecondary, line width=0.6pt}]
 \node[pbox] (git) at (0,0) {\textbf{GitHub}\\ \footnotesize code, configs,\\ pull requests};
 \node[pbox] (img) at (3.3,0) {\textbf{GitHub Actions}\\ \footnotesize builds the\\ Docker image};
@@ -72,7 +73,7 @@ Checkpoint & Not given & Best validation loss \\
 \node[pbox] (hub) at (9.9,0) {\textbf{HF Hub}\\ \footnotesize private\\ checkpoints};
 \node[pbox] (eval) at (9.9,-2.9) {\textbf{University A10}\\ \footnotesize evaluation and\\ XAI scripts};
 \node[pbox] (docs) at (6.6,-2.9) {\textbf{Project notes}\\ \footnotesize results, plots,\\ decisions};
-\node[pbox, draw=inkmuted, fill=inkmuted!8] (wandb) at (3.3,-2.9) {\textbf{W\&B}\\ \footnotesize training curves};
+\node[pbox, draw=teachercolor, fill=teachercolor!8] (wandb) at (3.3,-2.9) {\textbf{W\&B}\\ \footnotesize training curves};
 \draw[arr] (git) -- (img);
 \draw[arr] (img) -- (job);
 \draw[arr] (job) -- (hub);
@@ -80,7 +81,8 @@ Checkpoint & Not given & Best validation loss \\
 \draw[arr] (eval) -- (docs);
 \draw[arr] (job.south) -- ++(0,-0.55) -| (wandb.north);
 \draw[arr] (docs.south) -- ++(0,-0.35) -| node[pos=0.25, below, font=\footnotesize, text=inksecondary] {next experiment} (git.south);
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption[The path from a code change to a result]{The path from a code change to a result. HF is short for Hugging Face. Each experiment is a pull request with a config. A new Docker image is necessary when the code or the config changes.}
 \label{fig:pipeline}
 \end{figure}

@@ -26,7 +26,7 @@ lines = [
     '',
     r'{\small',
     r'\setlength{\tabcolsep}{4pt}',
-    r'\begin{longtable}{@{}>{\raggedright\arraybackslash}p{5.4cm}rrrrr@{}}',
+    r'\begin{longtable}{@{}>{\raggedright\arraybackslash}p{4.3cm}rrrrr@{}}',
     r'\caption[MMLU accuracy for each subject]{MMLU accuracy for each subject, in \%. $n$ is the number of questions.}'
     r'\label{tab:mmlu-subjects}\\',
     r'\toprule',

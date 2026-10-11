@@ -15,15 +15,16 @@ Lizard~\cite{lizard} replaces every softmax attention layer of the teacher with 
 
 \begin{figure}[t]
 \centering
+\resizebox{\linewidth}{!}{%
 \begin{tikzpicture}[
   font=\small, >={Stealth[length=2.2mm]}, node distance=6mm,
   box/.style={draw=#1, fill=#1!10, rounded corners=1.5pt, align=center, inner sep=4pt, line width=0.6pt},
-  teacher/.style={box=inkmuted, text width=3.4cm},
-  lizard/.style={box=seriesblue, text width=3.9cm},
-  small/.style={box=seriesblue, text width=1.6cm},
-  opt/.style={draw=seriesorange, fill=seriesorange!8, dashed, rounded corners=1.5pt, align=center, inner sep=4pt, text width=3.9cm, line width=0.6pt},
+  teacher/.style={box=teachercolor, text width=3.4cm},
+  lizard/.style={box=lizardcolor, text width=3.9cm},
+  small/.style={box=lizardcolor, text width=1.6cm},
+  opt/.style={draw=changecolor, fill=changecolor!8, dashed, rounded corners=1.5pt, align=center, inner sep=4pt, text width=3.9cm, line width=0.6pt},
   arr/.style={->, draw=inksecondary, line width=0.6pt}]
-\node[box=inkmuted, text width=1.6cm] (x) at (0,0) {input $\vx_i$};
+\node[box=teachercolor, text width=1.6cm] (x) at (0,0) {input $\vx_i$};
 \node[teacher] (proj) at (0,-1.35) {$W_Q,\ W_K,\ W_V$\\ \footnotesize teacher weights};
 \node[small, text width=1.7cm] (gate) at (-6.8,-3.0) {gate $W_\gamma$\\[1pt] \footnotesize $\sigma(W_\gamma \vx_i)$};
 \node[lizard] (phi) at (-3.6,-3.0) {Hedgehog maps $\phi_q,\ \phi_k$\\ \footnotesize shared by the 32 heads};
@@ -31,10 +32,10 @@ Lizard~\cite{lizard} replaces every softmax attention layer of the teacher with 
 \node[lizard] (gla) at (-3.6,-4.85) {\textbf{Gated branch}\\ \footnotesize all keys $t \le i$, weight $\prod_{l=t+1}^{i}\gamma_l$, own row sum};
 \node[lizard] (win) at (3.6,-4.85) {\textbf{Window branch}\\ \footnotesize softmax over the last 128 keys};
 \node[small] (sink) at (6.6,-4.85) {sinks\\ $t_1, \dots, t_4$};
-\node[circle, draw=seriesblue, fill=seriesblue!10, inner sep=1.5pt, line width=0.6pt] (alpha) at (3.6,-6.35) {$\times\,\alpha$};
+\node[circle, draw=lizardcolor, fill=lizardcolor!10, inner sep=1.5pt, line width=0.6pt] (alpha) at (3.6,-6.35) {$\times\,\alpha$};
 \node[circle, draw=inksecondary, inner sep=1pt, line width=0.6pt] (plus) at (0,-7.05) {$+$};
 \node[teacher] (oproj) at (0,-8.1) {$W_O$\\ \footnotesize teacher weight};
-\node[box=inkmuted, text width=1.6cm] (y) at (0,-9.25) {output};
+\node[box=teachercolor, text width=1.6cm] (y) at (0,-9.25) {output};
 \draw[arr] (x) -- (proj);
 \draw[arr] (x.west) -| (gate.north);
 \draw[arr] (proj.south) -- ++(0,-0.4) -| (phi.north);
@@ -50,12 +51,13 @@ Lizard~\cite{lizard} replaces every softmax attention layer of the teacher with 
 \draw[arr] (gla) |- (plus);
 \draw[arr] (plus) -- (oproj);
 \draw[arr] (oproj) -- (y);
-\node[box=seriesblue, minimum width=4mm, minimum height=3mm, inner sep=0pt] (l1) at (-6.4,-8.65) {};
+\node[box=lizardcolor, minimum width=4mm, minimum height=3mm, inner sep=0pt] (l1) at (-6.4,-8.65) {};
 \node[right=1mm of l1, font=\footnotesize, align=left] {Lizard parameters,\\trained in stage 1};
-\node[box=inkmuted, minimum width=4mm, minimum height=3mm, inner sep=0pt] (l2) at (-6.4,-9.45) {};
+\node[box=teachercolor, minimum width=4mm, minimum height=3mm, inner sep=0pt] (l2) at (-6.4,-9.45) {};
 \node[right=1mm of l2, font=\footnotesize, align=left] {teacher weights,\\LoRA in stage 2};
-\end{tikzpicture}
-\caption[One Lizard attention layer]{One Lizard attention layer. The teacher projections give the queries $\vq$, the keys $\vk$ and the values $\vv$. Blue parts are the Lizard parameters. Gray parts are the weights of the teacher. The orange RoPE box is the change of \cref{ch:rope}. The original Lizard has no RoPE in either branch.}
+\end{tikzpicture}%
+}
+\caption[One Lizard attention layer]{One Lizard attention layer. The teacher projections give the queries $\vq$, the keys $\vk$ and the values $\vv$. Blue parts are the Lizard parameters. Gray parts are the weights of the teacher. The purple RoPE box is the change of \cref{ch:rope}. The original Lizard has no RoPE in either branch.}
 \label{fig:lizard-layer}
 \end{figure}
 
@@ -173,7 +175,7 @@ A line-by-line comparison of the formulas of the paper with the code found 17 di
 \small
 \caption[Open points of the paper]{Open points of the paper and the choice of the code (project notes, documents~9, 13 and \enquote{math against code}).}
 \label{tab:open-points}
-\begin{tabularx}{\linewidth}{@{}lLL@{}}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{3.3cm}LL@{}}
 \toprule
 Point & What the paper says & Choice of the code \\
 \midrule

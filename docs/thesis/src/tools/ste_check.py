@@ -74,8 +74,8 @@ def detex(text):
     for env in DROP_ENVS:
         text = strip_env(text, env)
     text = re.sub(r'\$[^$]*\$', 'X', text)
-    for name in ('chapter', 'section', 'subsection', 'subsubsection', 'paragraph'):
-        level = {'chapter': '#', 'section': '##', 'subsection': '###'}.get(name, '####')
+    for name in ('chapter', 'addchap', 'section', 'subsection', 'subsubsection', 'paragraph'):
+        level = {'chapter': '#', 'addchap': '#', 'section': '##', 'subsection': '###'}.get(name, '####')
         text = keep_command(text, name, '\n\n' + level + ' {}\n\n')
     text = keep_command(text, 'caption', '\n\n{}\n\n')
     for name in ('textbf', 'emph', 'textit', 'textsc', 'mbox', 'text', 'enquote', 'underline', 'textrm'):

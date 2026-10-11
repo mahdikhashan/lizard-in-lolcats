@@ -15,26 +15,47 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
+from matplotlib import font_manager  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
 
 SRC = pathlib.Path(__file__).resolve().parent.parent
 OUT = SRC / 'figures'
 OUT.mkdir(exist_ok=True)
 
-# Palette (reference palette of the dataviz method, light mode)
-SURFACE = '#fcfcfb'
-INK, INK2, MUTED = '#0b0b0b', '#52514e', '#898781'
-GRID, AXIS = '#e1e0d9', '#c3c2b7'
-BLUE, ORANGE, AQUA, YELLOW = '#2a78d6', '#eb6834', '#1baf7a', '#eda100'
-SERIES = [BLUE, ORANGE, AQUA, YELLOW]
-BLUE_RAMP = ['#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7', '#3987e5',
-             '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281', '#0d366b']
-SEQ = LinearSegmentedColormap.from_list('blue', ['#ffffff'] + BLUE_RAMP)
+# Palette: the colors of the JKU template (jkureport.sty), checked with the dataviz validator.
+# Categorical order blue, green, purple, red passes the adjacent-pair checks. For plots that compare all
+# pairs (scatter), the marker shape is a second encoding, because blue and purple are close for protan vision.
+JKU_BLUE, JKU_GREEN, JKU_PURPLE, JKU_RED = '#046E98', '#4CAC4E', '#9C477B', '#E73729'
+JKU_GREY, JKU_DARK_GREY = '#808288', '#5A5A5A'
+SURFACE = '#FFFFFF'
+INK, INK2, MUTED = '#000000', JKU_DARK_GREY, JKU_GREY
+GRID, AXIS = '#E3E4E6', '#B3B4B8'
+BLUE = JKU_BLUE
+SERIES = [JKU_BLUE, JKU_GREEN, JKU_PURPLE, JKU_RED]
+MARKERS = ['o', 's', '^', 'D']
 
-TEXT_WIDTH = 6.1  # inches, about the text width of the thesis
+
+def _mix(c1, c2, f):
+    a = np.array([int(c1[i:i + 2], 16) for i in (1, 3, 5)], float)
+    b = np.array([int(c2[i:i + 2], 16) for i in (1, 3, 5)], float)
+    return '#%02X%02X%02X' % tuple(np.round(a + (b - a) * f).astype(int))
+
+
+# Sequential ramp of JKU blue: light tint to dark shade
+BLUE_RAMP = [_mix('#FFFFFF', JKU_BLUE, f) for f in np.linspace(0.18, 1.0, 9)] + \
+            [_mix(JKU_BLUE, '#012A3B', f) for f in np.linspace(0.25, 1.0, 4)]
+SEQ = LinearSegmentedColormap.from_list('jkublue', ['#FFFFFF'] + BLUE_RAMP)
+
+# The sans font of the JKU template (Public Sans), from the fonts folder of the template
+FONT_DIR = SRC / 'fonts'
+for _f in sorted(FONT_DIR.glob('PublicSans-*.ttf')):
+    font_manager.fontManager.addfont(str(_f))
+FONT = 'Public Sans' if any(FONT_DIR.glob('PublicSans-Regular.ttf')) else 'DejaVu Sans'
+
+TEXT_WIDTH = 5.3  # inches, the text width of the JKU template (384 pt)
 
 plt.rcParams.update({
-    'font.family': 'DejaVu Sans', 'font.size': 8.5, 'axes.titlesize': 9, 'axes.labelsize': 8.5,
+    'font.family': FONT, 'font.size': 8.5, 'axes.titlesize': 9, 'axes.labelsize': 8.5,
     'xtick.labelsize': 8, 'ytick.labelsize': 8, 'legend.fontsize': 8,
     'text.color': INK, 'axes.labelcolor': INK2, 'xtick.color': INK2, 'ytick.color': INK2,
     'axes.edgecolor': AXIS, 'axes.linewidth': 0.8, 'axes.facecolor': SURFACE, 'figure.facecolor': 'white',
@@ -141,8 +162,8 @@ def loss_vs_accuracy():
                               (axes[1], 3, 'ARC-Easy after stage 1', teacher[1])):
         for g in range(3):
             pts = [r for r in runs if r[4] == g]
-            ax.scatter([r[1] for r in pts], [r[col] for r in pts], s=26, color=SERIES[g],
-                       edgecolor=SURFACE, linewidth=1.2, zorder=3, label=groups[g])
+            ax.scatter([r[1] for r in pts], [r[col] for r in pts], s=28, color=SERIES[g], marker=MARKERS[g],
+                       edgecolor=SURFACE, linewidth=1.0, zorder=3, label=groups[g])
         for r in runs:
             if r[0] in label_at[col]:
                 ax.annotate(r[0], (r[1], r[col]), xytext=label_at[col][r[0]], textcoords='data', fontsize=6.3,
@@ -211,7 +232,8 @@ def percent_of_teacher():
         ax.axhline(yi, color=GRID, lw=0.6, zorder=0)
     for k, (task, col) in enumerate((('PIQA', 1), ('ARC-Easy', 2))):
         vals = [100 * m[col] / teacher[task] for m in models]
-        ax.scatter(vals, y, s=34, color=SERIES[k], edgecolor=SURFACE, linewidth=1.2, zorder=3, label=task)
+        ax.scatter(vals, y, s=34, color=SERIES[k], marker=MARKERS[k], edgecolor=SURFACE, linewidth=1.0, zorder=3,
+                   label=task)
         for v, yi in zip(vals, y):
             ax.annotate(f'{v:.1f}', (v, yi), xytext=(0, 6 if k == 0 else -11), textcoords='offset points',
                         ha='center', fontsize=6.8, color=INK2)
@@ -242,7 +264,8 @@ def mmlu_letters():
     ax.set_ylabel('Share of the questions (%)')
     ax.set_ylim(0, 58)
     ax.grid(axis='x', visible=False)
-    ax.legend(loc='upper right')
+    ax.legend(loc='lower center', bbox_to_anchor=(0.5, 1.0), ncol=3, fontsize=7.2, columnspacing=1.0,
+              handletextpad=0.4)
     save(fig, 'mmlu_letters')
 
 
@@ -340,7 +363,7 @@ def timeline():
     ys = np.arange(len(events))[::-1]
     for y, (d, label, g) in zip(ys, events):
         day = (dt.date.fromisoformat(d) - start).days
-        ax.scatter(day, y, s=30, color=SERIES[g], edgecolor=SURFACE, linewidth=1.2, zorder=3)
+        ax.scatter(day, y, s=30, color=SERIES[g], marker=MARKERS[g], edgecolor=SURFACE, linewidth=1.0, zorder=3)
         ax.text(day + 0.45, y, label, va='center', fontsize=6.8, color=INK)
     ticks = [dt.date(2026, 9, 24) + dt.timedelta(days=k) for k in range(0, 19, 3)]
     ax.set_xticks([(t - start).days for t in ticks], [t.strftime('%d %b') for t in ticks])
@@ -350,9 +373,121 @@ def timeline():
     ax.grid(axis='y', visible=False)
     ax.spines['left'].set_visible(False)
     for g, name in enumerate(names):
-        ax.scatter([], [], s=30, color=SERIES[g], label=name)
+        ax.scatter([], [], s=30, color=SERIES[g], marker=MARKERS[g], label=name)
     ax.legend(loc='lower left', bbox_to_anchor=(0, -0.3), ncol=3)
     save(fig, 'timeline')
+
+
+# 11-14. Redraws of four XAI figures of the project notes, from their JSON files in docs/experiments
+EXP = SRC.parent.parent / 'experiments'
+
+
+def _load(folder, name):
+    import json
+    return json.load(open(EXP / folder / f'{name}.json'))
+
+
+# 11. Layer-wise MSE of the Lizard stage 1 runs and the LoLCATs control (docs/experiments/xai-layer-wise-mse)
+def xai_layer_mse():
+    lizard = ['fd128_lolcats', 'fd32_lolcats', 'fd32_paper_bf16', 'fd32_paper_fp32', 'config1', 'v2_alphahead',
+              'v2_perhead_hybrid']
+    control = _load('xai-layer-wise-mse', 'lolcats_attention_fd128')
+    layers = np.arange(16)
+    fig, axes = plt.subplots(1, 2, figsize=(TEXT_WIDTH, 2.45))
+    for ax, key, scale, title in ((axes[0], 'mse', 1000.0, '(a) 1000 × MSE (scale of the stage 1 loss)'),
+                                  (axes[1], 'relative_mse', 1.0, '(b) Relative MSE (log scale)')):
+        for k, name in enumerate(lizard):
+            d = _load('xai-layer-wise-mse', name)
+            ax.plot(layers, [l[key] * scale for l in d['layers']], color=AXIS, lw=1.0,
+                    label='7 Lizard runs without RoPE' if k == 0 else None)
+        ax.plot(layers, [l[key] * scale for l in control['layers']], color=JKU_BLUE, lw=1.8, marker='o', ms=3.5,
+                mec=SURFACE, mew=0.8, label='LoLCATs attention (control)')
+        ax.set_title(title)
+        ax.set_xlabel('Layer')
+        ax.set_xticks([0, 3, 6, 9, 12, 15])
+    axes[1].set_yscale('log')
+    axes[0].legend(loc='upper left')
+    fig.subplots_adjust(wspace=0.28)
+    save(fig, 'xai_layer_mse')
+
+
+# 12. Layer-wise MSE of window_rope against Run 1 and the control (docs/experiments/xai-layer-wise-mse)
+def rope_layer_mse():
+    run1 = _load('xai-layer-wise-mse', 'fd128_lolcats')
+    rope = _load('xai-layer-wise-mse', 'v2_window_rope')
+    control = _load('xai-layer-wise-mse', 'lolcats_attention_fd128')
+    layers = np.arange(16)
+    m1 = np.array([l['mse'] for l in run1['layers']]) * 1000
+    mr = np.array([l['mse'] for l in rope['layers']]) * 1000
+    mc = np.array([l['mse'] for l in control['layers']]) * 1000
+    fig, axes = plt.subplots(1, 2, figsize=(TEXT_WIDTH, 2.45))
+    ax = axes[0]
+    for vals, name, k in ((m1, 'Lizard Run 1', 0), (mr, 'window_rope', 1), (mc, 'LoLCATs control', 2)):
+        ax.plot(layers, vals, color=SERIES[k], marker=MARKERS[k], ms=3.5, mec=SURFACE, mew=0.8, label=name)
+    ax.set_title('(a) 1000 × MSE for each layer')
+    ax.set_xlabel('Layer')
+    ax.set_xticks([0, 3, 6, 9, 12, 15])
+    ax.legend(loc='upper left')
+    ax = axes[1]
+    factor = m1 / mr
+    bars = ax.bar(layers, factor, 0.62, color=JKU_GREEN, edgecolor=SURFACE, lw=0.6)
+    for i in (0, 15):
+        ax.text(i, factor[i] + 0.1, f'{factor[i]:.1f}×', ha='center', va='bottom', fontsize=7, color=INK2)
+    ax.set_title('(b) Run 1 ÷ window_rope')
+    ax.set_xlabel('Layer')
+    ax.set_xticks([0, 3, 6, 9, 12, 15])
+    ax.set_ylim(0, 6.2)
+    ax.grid(axis='x', visible=False)
+    fig.subplots_adjust(wspace=0.28)
+    save(fig, 'rope_layer_mse')
+
+
+def _heatmap(ax, matrix, cols, title, norm, fmt):
+    ax.imshow(matrix, cmap=SEQ, norm=norm, aspect='auto', interpolation='nearest')
+    for i in range(matrix.shape[0]):
+        for j in range(matrix.shape[1]):
+            v = matrix[i, j]
+            shade = norm(v) if callable(norm) else v
+            ax.text(j, i, fmt(v), ha='center', va='center', fontsize=5.2,
+                    color='white' if shade > 0.55 else INK)
+    ax.set_xticks(range(len(cols)), cols, fontsize=6.8)
+    ax.set_yticks(range(matrix.shape[0]), range(matrix.shape[0]), fontsize=6.5)
+    ax.set_title(title, fontsize=8)
+    ax.grid(False)
+    for s in ax.spines.values():
+        s.set_visible(False)
+    ax.tick_params(length=0)
+
+
+# 13. Branch decomposition at positions 0-127 (docs/experiments/xai-branch-fit)
+def rope_branch_fit():
+    from matplotlib.colors import LogNorm
+    sets = ['G', 'W', 'WR', 'G+W', 'G+WR', 'trained']
+    norm = LogNorm(vmin=1e-3, vmax=1.0, clip=True)
+    fig, axes = plt.subplots(1, 2, figsize=(TEXT_WIDTH, 3.5))
+    for ax, name, title in ((axes[0], 'fd128_lolcats', 'Lizard Run 1'), (axes[1], 'v2_window_rope', 'window_rope')):
+        d = _load('xai-branch-fit', name)
+        m = np.array([[l['fits']['0–127'][s]['relative_error'] for s in sets] for l in d['layers']])
+        _heatmap(ax, m, sets, title, norm, lambda v: f'{v:.2g}' if v >= 0.001 else '<.001')
+    axes[0].set_ylabel('Layer')
+    fig.subplots_adjust(wspace=0.12)
+    save(fig, 'rope_branch_fit')
+
+
+# 14. Relative MSE by layer and position bucket (docs/experiments/xai-position-mse)
+def rope_position_heatmap():
+    from matplotlib.colors import Normalize
+    buckets = ['0–127', '128–511', '512–2047']
+    norm = Normalize(vmin=0.0, vmax=0.72)
+    fig, axes = plt.subplots(1, 2, figsize=(TEXT_WIDTH * 0.82, 3.4))
+    for ax, name, title in ((axes[0], 'fd128_lolcats', 'Lizard Run 1'), (axes[1], 'v2_window_rope', 'window_rope')):
+        d = _load('xai-position-mse', name)
+        m = np.array([[b['relative_mse'] for b in l['buckets']] for l in d['layers']])
+        _heatmap(ax, m, buckets, title, norm, lambda v: f'{v:.2f}')
+        ax.set_xlabel('Query positions', fontsize=7.5)
+    axes[0].set_ylabel('Layer')
+    fig.subplots_adjust(wspace=0.15)
+    save(fig, 'rope_position_heatmap')
 
 
 if __name__ == '__main__':
@@ -366,3 +501,7 @@ if __name__ == '__main__':
     mmlu_subjects()
     gate_decay()
     timeline()
+    xai_layer_mse()
+    rope_layer_mse()
+    rope_branch_fit()
+    rope_position_heatmap()
