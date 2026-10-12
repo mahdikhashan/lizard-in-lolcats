@@ -1,6 +1,6 @@
 # Experiment: RoPE in the window branch (`window_rope`)
 
-**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6. On all MMLU questions: 27.2, against 31.7 for the teacher ("Results", MMLU, all questions). ARC-Challenge 36.1 and HellaSwag 60.7 (normalized accuracy, 2026-10-11). WinoGrande has no result yet ("Results", Table 9 tasks). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
+**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6. On all MMLU questions: 27.2, against 31.7 for the teacher ("Results", MMLU, all questions). ARC-Challenge 36.1 and HellaSwag 60.7 (normalized accuracy, 2026-10-11). WinoGrande 59.6 (accuracy, 2026-10-12, "Results", Table 9 tasks). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
 
 ## Question
 
@@ -384,13 +384,14 @@ The values are means over the questions of each group. Computer security has the
 
 **Finding 21: bf16 ties affect both models**. In both models, the letter log-likelihoods are multiples of 0.125 or 0.25 (bf16 logits). 24.2% of the teacher answers and 20.5% of the student answers have a tie at the maximum. In a tie, the first letter wins. With a random choice in each tie, the mean over questions is 31.7 for the teacher (stored 31.0) and 27.0 for the student (stored 26.9). The letter shares are then 40.0% / 28.6% / 27.8% / 3.5% (teacher) and 35.5% / 38.7% / 23.7% / 2.1% (student). Thus the ties add to the preference for "A", but the rare "D" does not come from the ties. [Document 22](../22-mmlu-xai-methods.md), A6, gives the details.
 
-### Table 9 tasks: ARC-Challenge and HellaSwag (2026-10-11)
+### Table 9 tasks: ARC-Challenge, HellaSwag and WinoGrande (2026-10-11 and 2026-10-12)
 
 - **Run:** `MODELS=stage2 TASKS="arc_challenge hellaswag winogrande" MODEL_CONFIG=distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope OUT_DIR=results/table9_stage2 scripts/compare_stages.sh` on `student06` (one A10, lolcats `ba003ed`, harness `b281b09`). All three tasks are 0-shot.
-- **Run history:** the first run gave ARC-Challenge. Then the home folder became full (quota 20 GB) during the download of HellaSwag, and the run stopped. The command `rm -rf ~/.cache/pip` freed 4.8 GB. Then a second run with `TASKS="hellaswag winogrande"` gave HellaSwag. The output that these notes have ends after HellaSwag. Thus WinoGrande has no result yet.
-- **Checks:** in both runs, all 80 stage 1 tensors and all 128 stage 2 tensors loaded. 0 missing, 0 unexpected. The stored step of both checkpoints is 1100, with the losses 1.2290 and 1.2352.
+- **Run history:** the first run gave ARC-Challenge. Then the home folder became full (quota 20 GB) during the download of HellaSwag, and the run stopped. The command `rm -rf ~/.cache/pip` freed 4.8 GB. Then a second run with `TASKS="hellaswag winogrande"` gave HellaSwag. The output that these notes have ends after HellaSwag. Thus WinoGrande had no result. A third run with `TASKS=winogrande` gave WinoGrande on 2026-10-12.
+- **Checks:** in all three runs, all 80 stage 1 tensors and all 128 stage 2 tensors loaded. 0 missing, 0 unexpected. The stored step of both checkpoints is 1100, with the losses 1.2290 and 1.2352.
 - **Files:** none in the repository. The zip of the run directory failed, because the disk was full. The values come from the console output of the harness.
-- **Time:** ARC-Challenge, 4,687 requests in 4 minutes 23 seconds. HellaSwag, 40,145 requests in 47 minutes.
+- **Time:** ARC-Challenge, 4,687 requests in 4 minutes 23 seconds. HellaSwag, 40,145 requests in 47 minutes. WinoGrande, 2,534 requests in 2 minutes 42 seconds.
+- **Summary step of the WinoGrande run:** the harness finished, but `compare_stages.py summary` then stopped with `ValueError: could not convert string to float: 'False'`. WinoGrande writes the per-question `acc` as the string `'True'` or `'False'`. `read_run` now reads these strings (`as_float`). The score comes from the harness output: `{'acc': 0.595895816890292, 'acc_stderr': 0.013791610664670858}`.
 
 Accuracy in %, ± the binomial SE. The paper reports the normalized accuracy for ARC-Challenge and HellaSwag, and the accuracy for WinoGrande. The paper values come from Table 9 of the Lizard paper and from another version of the harness.
 
@@ -398,7 +399,7 @@ Accuracy in %, ± the binomial SE. The paper reports the normalized accuracy for
 |---|---|---|---|---|---|---|
 | ARC-Challenge | 1,172 | 33.2 ± 1.4 | **36.1 ± 1.4** | 36.4 | 36.5 | 35.1 |
 | HellaSwag | 10,042 | 47.1 ± 0.5 | **60.7 ± 0.5** | 63.8 | 64.1 | 63.7 |
-| WinoGrande | – | Not measured yet | – | 60.0 | 59.7 | 61.5 |
+| WinoGrande | 1,267 | **59.6 ± 1.4** | – | 60.0 | 59.7 | 61.5 |
 
 The teacher has no result on these three tasks in this harness yet.
 
@@ -406,12 +407,13 @@ The teacher has no result on these three tasks in this harness yet.
 
 **Finding 23: on HellaSwag, `window_rope` is 3.1 points below the teacher of the paper**. The normalized accuracy is 60.7 ± 0.5, against 63.8 for the teacher and 64.1 for Lizard in the paper. This gap is larger than on PIQA (1.0 points below the teacher of the paper), ARC-Easy (1.6) and ARC-Challenge (0.3). But the teacher has no HellaSwag result in this harness. If the two harness versions agree on HellaSwag as on PIQA and ARC-Easy, `window_rope` keeps approximately 95% of the teacher on HellaSwag (60.7 / 63.8). A teacher run in this harness gives the real gap.
 
-**Next:** WinoGrande for `window_rope`, then the teacher on the three tasks in this harness. First check the free space with `df -h ~`.
+**Finding 24: on WinoGrande, `window_rope` is at the level of the paper**. The accuracy is 59.6 ± 1.4 on 1,267 questions. The paper gives 60.0 for the teacher, 59.7 for Lizard and 61.5 for LoLCATs. Thus `window_rope` is 0.4, 0.1 and 1.9 points below these values. The SE is 1.4 points, so none of these differences is clear. The teacher has no WinoGrande result in this harness yet.
+
+**Next:** the teacher on the three tasks in this harness. First check the free space with `df -h ~`.
 
 ```bash
-MODELS=stage2 TASKS=winogrande MODEL_CONFIG=distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope \
-  OUT_DIR=results/table9_stage2 scripts/compare_stages.sh
-MODELS=teacher TASKS="arc_challenge hellaswag winogrande" OUT_DIR=results/table9_teacher scripts/compare_stages.sh
+MODELS=teacher TASKS="arc_challenge hellaswag winogrande" MODEL_CONFIG=distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope \
+  OUT_DIR=results/table9_teacher scripts/compare_stages.sh
 ```
 
 ## Decision rules
