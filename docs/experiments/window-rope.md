@@ -1,6 +1,6 @@
 # Experiment: RoPE in the window branch (`window_rope`)
 
-**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6. On all MMLU questions: 27.2, against 31.7 for the teacher ("Results", MMLU, all questions). ARC-Challenge 36.1 and HellaSwag 60.7 (normalized accuracy, 2026-10-11). WinoGrande 59.6 (accuracy, 2026-10-12, "Results", Table 9 tasks). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
+**Status:** Stage 1 and stage 2 finished on 2026-10-10. After stage 2: PIQA 73.1 and ARC-Easy 63.8, against 68.0 and 54.8 for Run 2 of Lizard Run 1. MMLU subset 25.6. On all MMLU questions: 27.2, against 31.7 for the teacher ("Results", MMLU, all questions). ARC-Challenge 36.1 and HellaSwag 60.7 (normalized accuracy, 2026-10-11). WinoGrande 59.6 (accuracy, 2026-10-12, "Results", Table 9 tasks). The teacher in this harness gets 36.3, 63.7 and 60.1 on these three tasks (finding 25). The teacher in this harness has 74.4 and 65.3. After stage 1: validation loss 1.2290 (Run 1: 3.2549). PIQA 61.5 (Run 1: 57.6), ARC-Easy 43.3 (Run 1: 39.0), MMLU subset 24.6 (Run 1: 22.5). All six predictions hold. At positions 0–127, the window branch now gives almost the teacher output. There, most of the error comes from the mix of the two branches. The gated branch keeps the weight 1, but its best weight there is 0.08 ("Results", findings 6 and 7).
 
 ## Question
 
@@ -395,26 +395,40 @@ The values are means over the questions of each group. Computer security has the
 
 Accuracy in %, ± the binomial SE. The paper reports the normalized accuracy for ARC-Challenge and HellaSwag, and the accuracy for WinoGrande. The paper values come from Table 9 of the Lizard paper and from another version of the harness.
 
-| Task | Questions | `window_rope`, accuracy | `window_rope`, normalized accuracy | Paper: teacher 1B | Paper: Lizard 1B | Paper: LoLCATs 1B |
-|---|---|---|---|---|---|---|
-| ARC-Challenge | 1,172 | 33.2 ± 1.4 | **36.1 ± 1.4** | 36.4 | 36.5 | 35.1 |
-| HellaSwag | 10,042 | 47.1 ± 0.5 | **60.7 ± 0.5** | 63.8 | 64.1 | 63.7 |
-| WinoGrande | 1,267 | **59.6 ± 1.4** | – | 60.0 | 59.7 | 61.5 |
+| Task | Questions | `window_rope`, accuracy | `window_rope`, normalized accuracy | Teacher, this harness, accuracy | Teacher, this harness, normalized accuracy | Paper: teacher 1B | Paper: Lizard 1B | Paper: LoLCATs 1B |
+|---|---|---|---|---|---|---|---|---|
+| ARC-Challenge | 1,172 | 33.2 ± 1.4 | **36.1 ± 1.4** | 31.4 ± 1.4 | **36.3 ± 1.4** | 36.4 | 36.5 | 35.1 |
+| HellaSwag | 10,042 | 47.1 ± 0.5 | **60.7 ± 0.5** | 47.8 ± 0.5 | **63.7 ± 0.5** | 63.8 | 64.1 | 63.7 |
+| WinoGrande | 1,267 | **59.6 ± 1.4** | – | **60.1 ± 1.4** | – | 60.0 | 59.7 | 61.5 |
 
-The teacher has no result on these three tasks in this harness yet.
+The teacher ran on 2026-10-12 ("Teacher on the Table 9 tasks" below).
 
 **Finding 22: on ARC-Challenge, `window_rope` is at the level of the paper**. The normalized accuracy is 36.1. It is 0.3 points below the teacher of the paper (36.4) and 0.4 points below Lizard of the paper (36.5). The SE is 1.4 points, so the difference is not clear. On PIQA and ARC-Easy, this harness gives the teacher within 0.3 points of the paper (finding 12).
 
-**Finding 23: on HellaSwag, `window_rope` is 3.1 points below the teacher of the paper**. The normalized accuracy is 60.7 ± 0.5, against 63.8 for the teacher and 64.1 for Lizard in the paper. This gap is larger than on PIQA (1.0 points below the teacher of the paper), ARC-Easy (1.6) and ARC-Challenge (0.3). But the teacher has no HellaSwag result in this harness. If the two harness versions agree on HellaSwag as on PIQA and ARC-Easy, `window_rope` keeps approximately 95% of the teacher on HellaSwag (60.7 / 63.8). A teacher run in this harness gives the real gap.
+**Finding 23: on HellaSwag, `window_rope` is 3.1 points below the teacher of the paper**. The normalized accuracy is 60.7 ± 0.5, against 63.8 for the teacher and 64.1 for Lizard in the paper. This gap is larger than on PIQA (1.0 points below the teacher of the paper), ARC-Easy (1.6) and ARC-Challenge (0.3). But the teacher has no HellaSwag result in this harness. If the two harness versions agree on HellaSwag as on PIQA and ARC-Easy, `window_rope` keeps approximately 95% of the teacher on HellaSwag (60.7 / 63.8). The teacher run in this harness gives 95.3% (finding 25).
 
-**Finding 24: on WinoGrande, `window_rope` is at the level of the paper**. The accuracy is 59.6 ± 1.4 on 1,267 questions. The paper gives 60.0 for the teacher, 59.7 for Lizard and 61.5 for LoLCATs. Thus `window_rope` is 0.4, 0.1 and 1.9 points below these values. The SE is 1.4 points, so none of these differences is clear. The teacher has no WinoGrande result in this harness yet.
+**Finding 24: on WinoGrande, `window_rope` is at the level of the paper**. The accuracy is 59.6 ± 1.4 on 1,267 questions. The paper gives 60.0 for the teacher, 59.7 for Lizard and 61.5 for LoLCATs. Thus `window_rope` is 0.4, 0.1 and 1.9 points below these values. The SE is 1.4 points, so none of these differences is clear. The teacher in this harness gets 60.1 (finding 25).
 
-**Next:** the teacher on the three tasks in this harness. First check the free space with `df -h ~`.
+### Teacher on the Table 9 tasks (2026-10-12)
 
-```bash
-MODELS=teacher TASKS="arc_challenge hellaswag winogrande" MODEL_CONFIG=distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope \
-  OUT_DIR=results/table9_teacher scripts/compare_stages.sh
-```
+- **Run:** `OUT_DIR=results/table9/teacher MODEL_CONFIG=distill_llama3_2_1b_lizard_v2_w128_fd128_m4_windowrope MODELS=teacher TASKS="arc_challenge hellaswag winogrande" scripts/compare_stages.sh` on `student06` (one A10, lolcats `daa2bbe`, harness `b281b09`, Python 3.11.16, torch 2.5.1, CUDA 12.4, transformers 4.43.1, peft 0.9.0). All three tasks are 0-shot, batch size 1.
+- **Time:** ARC-Challenge, 4,687 requests in 2 minutes 6 seconds. HellaSwag, 40,145 requests in 28 minutes 40 seconds. WinoGrande, 2,534 requests in 1 minute 3 seconds.
+- **Summary step:** the harness finished all three tasks. Then `compare_stages.py summary` stopped with `ValueError: could not convert string to float: 'True'`, the same WinoGrande problem as above. `as_float` reads these strings. The scores come from the harness output:
+  - ARC-Challenge: `acc` 0.31399 (SE 0.01356), `acc_norm` 0.36348 (SE 0.01406)
+  - HellaSwag: `acc` 0.47799 (SE 0.00498), `acc_norm` 0.63683 (SE 0.00480)
+  - WinoGrande: `acc` 0.60142, SE 0.01376
+
+**Finding 25: in this harness, the teacher gets the values of the paper, and `window_rope` loses only on HellaSwag**. The teacher gets 36.3, 63.7 and 60.1, against 36.4, 63.8 and 60.0 in the paper. Thus the two harness versions agree within 0.1 points on these three tasks, as on PIQA and ARC-Easy (finding 12). Against the teacher of this harness, `window_rope` gets these differences (unpaired SE):
+
+| Task | `window_rope` | Teacher, this harness | Difference | Share of the teacher |
+|---|---|---|---|---|
+| ARC-Challenge (normalized) | 36.1 | 36.3 | −0.2 points, z ≈ −0.1 | approximately 99.4% |
+| HellaSwag (normalized) | 60.7 | 63.7 | −3.0 points, z ≈ −4.4 | approximately 95.3% |
+| WinoGrande | 59.6 | 60.1 | −0.5 points, z ≈ −0.3 | approximately 99.2% |
+
+On ARC-Challenge and WinoGrande, the difference is not clear. On HellaSwag, the gap of 3.0 points is clear (|z| ≥ 2). HellaSwag is the only short task where `window_rope` is clearly below the teacher.
+
+**Next:** the paired tests of these differences from the per-question files (issue 34 of mahdikhashan/jku-thesis-drafts).
 
 ## Decision rules
 
