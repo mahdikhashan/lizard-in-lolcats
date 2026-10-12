@@ -106,13 +106,14 @@ The Lizard attention v2 with RoPE in the window branch (`window_rope`), after st
 | MMLU, all questions (2026-10-11) | 23.3 | **27.2 ± 0.4** | +3.9 points | 31.7 ± 0.4 | 29.8 |
 | PIQA (accuracy) | 67.95 ± 1.09 | **73.1 ± 1.0** | +5.1 points, z ≈ 3.4 | 74.4 ± 1.0 | 74.8 |
 | ARC-Easy (accuracy) | 54.8 ± 1.0 | **63.8 ± 1.0** | +9.0 points, z ≈ 6.3 | 65.3 ± 1.0 | 65.6 |
-| ARC-Challenge (normalized accuracy, 2026-10-11) | – | **36.1 ± 1.4** | – | Not measured | 36.5 |
-| HellaSwag (normalized accuracy, 2026-10-11) | – | **60.7 ± 0.5** | – | Not measured | 64.1 |
+| ARC-Challenge (normalized accuracy, 2026-10-11) | – | **36.1 ± 1.4** | – | 36.3 ± 1.4 | 36.5 |
+| HellaSwag (normalized accuracy, 2026-10-11) | – | **60.7 ± 0.5** | – | 63.7 ± 0.5 | 64.1 |
+| WinoGrande (accuracy, 2026-10-12) | – | **59.6 ± 1.4** | – | 60.1 ± 1.4 | 59.7 |
 | Stage 2 validation loss | 2.252 | 1.235 | – | – | – |
 
 - The "A" collapse on MMLU is gone ("A" for 41.4% of the questions). On all MMLU questions, `window_rope` gets 27.2, above chance, and the teacher 31.7. The student keeps a third of the part of the teacher above chance ([RoPE in the window branch](experiments/window-rope.md), findings 15–21).
 - On PIQA and ARC-Easy, `window_rope` gets 98.2% and 97.7% of the teacher in this harness. The differences are −1.4 points (z ≈ −0.9) and −1.5 points (z ≈ −1.1), with unpaired SEs.
-- On ARC-Challenge, `window_rope` is 0.3 points below the teacher of the paper (36.4). On HellaSwag, it is 3.1 points below (63.8). The teacher has no result on these tasks in this harness. WinoGrande has no result yet ([RoPE in the window branch](experiments/window-rope.md), findings 22 and 23).
+- The teacher in this harness gets 36.3 on ARC-Challenge, 63.7 on HellaSwag and 60.1 on WinoGrande (2026-10-12), within 0.1 points of the paper. Against this teacher, `window_rope` is 0.2 points below on ARC-Challenge (z ≈ −0.1) and 0.5 points below on WinoGrande (z ≈ −0.3). On HellaSwag, it is 3.0 points below (z ≈ −4.4). Only the HellaSwag gap is clear ([RoPE in the window branch](experiments/window-rope.md), findings 22–25).
 
 ## Interpretation so far
 

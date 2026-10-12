@@ -299,6 +299,13 @@ def choice_stats(logits):
             'entropy_bits': -sum(x * math.log2(x) for x in p if x > 0)}
 
 
+def as_float(x):
+    """A per-question score as a float. WinoGrande writes acc as the string 'True' or 'False'"""
+    if isinstance(x, str) and x in ('True', 'False'):
+        return float(x == 'True')
+    return float(x)
+
+
 def read_run(run_dir):
     """Score, standard error and per-question results of one model on one task"""
     harness = load(join(run_dir, 'results.json'))
@@ -311,8 +318,8 @@ def read_run(run_dir):
                 logits = [d[k] for k in sorted((k for k in d if k.startswith('logit_')),
                                                key=lambda k: int(k.split('_')[1]))]
                 questions[(task, d['doc_id'])] = {
-                    'acc': float(d['acc']),
-                    'acc_norm': float(d['acc_norm']) if 'acc_norm' in d else None,
+                    'acc': as_float(d['acc']),
+                    'acc_norm': as_float(d['acc_norm']) if 'acc_norm' in d else None,
                     'prediction': max(range(len(logits)), key=lambda i: logits[i]),
                     'truth': d['truth'],
                     'logits': logits,
