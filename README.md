@@ -1,8 +1,6 @@
 Lizard on Llama-3.2-1B
 ---
 
-![Stage 1 of Lizard](./docs/figures/lizard-stage1.webp)
-
 #### Description
 
 A reproduction of Lizard ([arXiv:2507.09025](https://arxiv.org/abs/2507.09025)) on Llama-3.2-1B, built on the LoLCATs code base. Lizard replaces softmax attention with gated linear attention and a sliding window with sink tokens. Two distillation stages train it from the original model. This repository holds the training code, the evaluation scripts, the XAI scripts and the project notes of the master's thesis. The original LoLCATs README is in [README.lolcats.md](./README.lolcats.md).
