@@ -1,4 +1,4 @@
-Lizard on Llama-3.2-1B
+Lizard on Llama-3.2-1B in Lolcats
 ---
 
 #### Description
