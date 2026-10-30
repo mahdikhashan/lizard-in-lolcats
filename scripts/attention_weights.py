@@ -110,6 +110,18 @@ def lizard_weights(attn, x):
     q = attn.split(attn.q_proj(x), attn.heads)
     k = attn.split(attn.k_proj(x), attn.kv_heads)
     v = attn.split(attn.v_proj(x), attn.kv_heads)
+    if hasattr(attn, 'branch_weights'):  # v2: RoPE in the window if window_rope, alpha inside a_win
+        rope = None
+        if attn.window_rope:  # as LizardAttentionV2.forward without position_embeddings: one chunk from position 0
+            rope = attn.rotary_emb(v, torch.arange(v.shape[-2], device=v.device)[None])
+        gamma = torch.sigmoid(*upcast(attn.W_gamma(x))).transpose(1, 2)
+        a_gla, a_win = attn.branch_weights(q, k, gamma, rope)
+        alpha = attn.lizard_params(a_gla.dtype)[0]
+        assert alpha.numel() == 1, 'attention_weights.py supports one alpha for all heads'
+        weights = a_gla + a_win
+        check = rel_error(weights @ v.to(weights.dtype), attn.lizard(q, k, v, gamma, rope).float())
+        a_window = a_win / alpha if alpha.item() != 0 else a_win
+        return weights, a_gla, a_window, alpha.item(), check
     gamma = torch.sigmoid(*upcast(attn.W_gamma(x))).squeeze(-1)  # as in LolcatsLizardAttention.forward
     qf, kf, vf, alpha, meta = upcast(q, k, v, attn.alpha_blend, attn.meta_tokens)
     fq, fk = attn.feature_maps(qf, kf)
